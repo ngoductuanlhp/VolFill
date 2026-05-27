@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Local server / scratch
+*.pyc
+__pycache__/
+
+# Large generated assets — keep tracked-by-default off, opt in per file
+# (Uncomment if you decide to host these outside of git):
+# videos/orbit_*.mp4
+# models/*/*.glb

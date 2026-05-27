@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VolFill: Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching</title>
+  <meta name="description" content="VolFill recovers complete 3D scene geometry — including occluded surfaces — from a single RGB image, using a hybrid 3D VAE and a latent diffusion transformer trained with flow matching.">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="figures/volfill_favicon.png" type="image/png">
+
+  <!-- MathJax for inline LaTeX -->
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Google's <model-viewer> web component for interactive GLB rendering -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+</head>
+<body>
+
+<!-- =============================================================
+     HERO
+============================================================= -->
+<header class="content hero">
+  <span class="venue">arXiv 2026</span>
+  <h1>
+    <img class="title-icon" src="figures/volfill_icon.png" alt="VolFill logo">
+    <span class="ours">VolFill</span>:
+    <span class="subtitle-inline">Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching</span>
+  </h1>
+
+  <!-- TODO: replace placeholder authors with the real list before publishing. -->
+  <p class="authors">
+    <span><a href="https://ngoductuanlhp.github.io/" target="_blank" rel="noopener">Tuan Duc Ngo</a><sup>1</sup></span>
+    <span><a href="https://people.csail.mit.edu/ganchuang/"  target="_blank" rel="noopener">Chuang Gan</a><sup>1</sup></span>
+    <span><a href="https://kalo-ai.github.io/" target="_blank" rel="noopener">Evangelos Kalogerakis</a><sup>1,2</sup></span>
+  </p>
+  <p class="affiliations">
+    <span><sup>1</sup> UMass Amherst</span>
+    <span><sup>2</sup> TU Crete</span>
+  </p>
+
+  <div class="actions">
+    <a class="btn" href="paper/volfill.pdf" target="_blank" rel="noopener">📄 Paper</a>
+    <a class="btn" href="#" target="_blank" rel="noopener">🗂 arXiv</a>
+    <a class="btn" href="https://github.com/ngoductuanlhp/VolFill" target="_blank" rel="noopener">💻 Code</a>
+    <a class="btn" href="#bibtex">📑 BibTeX</a>
+  </div>
+</header>
+
+<!-- =============================================================
+     TEASER — interactive 3D viewer (scenes from models/valid_samples_teaser.txt)
+============================================================= -->
+<section class="content">
+  <h2>Amodal 3D Reconstruction from a Single Image</h2>
+  <p>
+    <span class="hl-grad"><strong>VolFill</strong> recovers the complete 3D scene</span> — including occluded surfaces behind the visible geometry — from a single RGB image. The reconstruction is represented as a Truncated Unsigned Distance Function (TUDF) grid, decoded into a point cloud.
+  </p>
+
+  <div class="viewer-panel">
+    <div class="viewer-stage teaser">
+      <model-viewer id="teaser-viewer"
+                    class="viewer-mv"
+                    src="models/scrream_scene10_full_00_001005/ours.glb"
+                    alt="VolFill 3D reconstruction"
+                    camera-controls
+                    interaction-prompt="none"
+                    touch-action="pan-y"
+                    environment-image="legacy"
+                    exposure="0.95"
+                    shadow-intensity="0"
+                    camera-orbit="0deg 75deg 100%"
+                    max-camera-orbit="auto auto 100%">
+      </model-viewer>
+    </div>
+
+    <div class="viewer-rows">
+      <div class="viewer-row">
+        <!-- Thumbs are populated at runtime from models/valid_samples_teaser.txt -->
+        <div class="viewer-thumbs" data-row="teaser"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================
+     ABSTRACT
+============================================================= -->
+<section class="content">
+  <h2 style="text-align:center;">Abstract</h2>
+  <p>
+    Reconstructing the complete geometry of a scene from a single RGB image remains challenging — especially when inferring hidden structures where visual evidence is incomplete. We introduce <strong class="hl-grad">VolFill</strong>, a generative framework that predicts the 3D structure of the <em>complete</em> scene rather than relying on traditional pixel-aligned regression. Our method utilizes a hybrid 3D VAE to compress sparse truncated unsigned distance function grids into a compact latent space, paired with a latent Diffusion Transformer that denoises this representation to recover the complete scene. We condition the generation on geometry foundation models, leveraging rich spatial priors for robust reasoning. Unlike existing methods limited by per-ray constraints or unstructured point-cloud queries, <strong>VolFill</strong> provides a structured representation that supports direct surface extraction and occupancy queries at scale. Extensive experiments on the SCRREAM and NRGB-D datasets demonstrate that our approach significantly outperforms current baselines, providing a robust foundation for holistic spatial understanding.
+  </p>
+</section>
+
+<!-- =============================================================
+     TASK DEFINITION
+============================================================= -->
+<section class="content">
+  <h2>Task</h2>
+  <p>
+    <strong class="hl-grad">Single-view amodal 3D scene reconstruction.</strong> Given one RGB image $\mathbf{I} \in \mathbb{R}^{H \times W \times 3}$ of an indoor scene, we seek to recover the complete scene geometry $S$ within the camera frustum — including surfaces behind the visible foreground.
+  </p>
+</section>
+
+<!-- =============================================================
+     METHOD
+============================================================= -->
+<section class="content">
+  <h2>Method</h2>
+  <!-- <p>
+    We represent the scene as a <strong>Truncated Unsigned Distance Function (TUDF)</strong> $V \in \mathbb{R}^{N \times N \times N}$ at resolution $N = 256$, where each voxel stores the distance to the nearest physical surface $\mathcal{S}$ clipped at a maximum value $\tau$: $V(\mathbf{p}) = \min(\mathrm{dist}(\mathbf{p}, \mathcal{S}), \tau)$. We use the <em>unsigned</em> formulation because indoor scenes are frequently non-watertight — common open geometries such as single-sided walls, floors, and furniture have no globally consistent inside/outside orientation, making a signed distance ill-defined beyond the immediate voxel neighborhood. The TUDF grid is a flexible geometric proxy: surfaces are extracted as point clouds by thresholding $|V(\mathbf{p})| < \epsilon_{\text{tudf}}$, or converted to clean watertight meshes via MeshUDF.
+  </p> -->
+  <p>
+    We represent the scene as a <strong>Truncated Unsigned Distance Function (TUDF)</strong> $V \in \mathbb{R}^{N \times N \times N}$ at resolution $N = 256$, where each voxel stores the distance to the nearest physical surface $\mathcal{S}$ clipped at a maximum value $\tau$: $V(\mathbf{p}) = \min(\mathrm{dist}(\mathbf{p}, \mathcal{S}), \tau)$.
+  </p>
+  <p>
+    Rather than predicting $V$ as a deterministic regression problem, we formulate amodal reconstruction as estimating the conditional distribution $P(V \mid I)$, realized by a hybrid 3D VAE that compresses $V$ into a compact latent space and a latent diffusion transformer trained with flow matching, conditioned on geometric priors from a frozen foundation model.
+  </p>
+
+  <div class="method-stage">
+    <h3>Stage 1 — Hybrid 3D VAE</h3>
+    <figure class="fig-half">
+      <img src="figures/architecture_vae.png" alt="Hybrid 3D VAE architecture">
+    </figure>
+    <ul class="method-bullets">
+      <li><strong>Encoder $\mathcal{E}$.</strong> Compresses the TUDF into a compact latent via <em>sparse 3D convolutions</em>. Because only voxels near surfaces carry meaningful values, the grid is naturally sparse and tolerates aggressive downsampling.</li>
+      <li><strong>Decoder $\mathcal{D}$.</strong> Uses a <em>hybrid dense-to-sparse</em> design: dense convolutions at low resolution, an occupancy head at the middle stage that <em>sparsifies</em> the feature map by predicting which voxels are surface-adjacent, then sparse convolutions to reach full resolution — keeping memory and compute proportional to surface area, not scene volume.</li>
+      <li><strong>Training objective.</strong> $\mathcal{L}_{\text{VAE}} = \mathcal{L}_1(\hat V, V_{\text{gt}}) + \lambda_{\text{bce}} \cdot \mathrm{BCE}(\hat O, O_{\text{gt}}) + \lambda_{\text{dice}} \cdot \mathrm{Dice}(\hat O, O_{\text{gt}}) + \lambda_{\text{kl}} \cdot \mathcal{L}_{\text{KL}}$ — distance regression on active voxels, occupancy supervision, and KL regularization.</li>
+    </ul>
+  </div>
+
+  <div class="method-stage">
+    <h3>Stage 2 — Latent DiT with Flow Matching</h3>
+    <figure class="fig-wide">
+      <img src="figures/architecture_dit.png" alt="Latent DiT and conditioning architecture">
+    </figure>
+
+    <div class="idea-grid">
+      <div class="idea">
+        <h4>① Global geometric prior</h4>
+        <p>
+          Frozen <strong>MoGe2</strong> features serve as image tokens fed into the DiT via cross-attention, providing rich monocular geometric priors without fine-tuning the foundation model.
+        </p>
+      </div>
+      <div class="idea">
+        <h4>② Visible-latent inpainting</h4>
+        <p>
+          The MoGe2 visible pointmap is converted to a visible-only TUDF and encoded into a latent $\mathbf{z}_{\text{vis}}$, then <em>added</em> into the noisy latent through a zero-initialized projection $\tilde{\mathbf{z}}_t = \mathbf{z}_t + \mathrm{MLP}_0(\mathbf{z}_{\text{vis}})$, anchoring generation to the observed geometry.
+        </p>
+      </div>
+    </div>
+
+    <ul class="method-bullets">
+      <li><strong>Backbone.</strong> A latent Diffusion Transformer $\Phi$ that operates in the VAE bottleneck space, with the two conditioning paths above.</li>
+      <li><strong>Flow matching.</strong> A rectified-flow objective with a linear noise-to-data path $\mathbf{z}_t = (1 - t)\,\boldsymbol{\epsilon} + t\,\mathbf{z}_1$ and velocity target $\mathbf{u}^\star = \mathbf{z}_1 - \boldsymbol{\epsilon}$; the DiT is trained to regress the velocity.</li>
+      <li><strong>Inference.</strong> Sample $\mathbf{z}_0 \sim \mathcal{N}(0, I)$ and integrate the learned ODE with Euler steps + classifier-free guidance to a clean latent $\mathbf{z}_1$, then decode through $\mathcal{D}$ to obtain the final TUDF $V_{\text{pred}}$.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =============================================================
+     QUALITATIVE RESULTS  (side-by-side <model-viewer>)
+     TODO: populate models/<scene>/ via scripts/build_glb_assets.py
+============================================================= -->
+<section class="content">
+  <h2>Qualitative Results</h2>
+  <p>
+    A selected baseline (middle) is shown side-by-side with <strong>VolFill</strong> (right). Pick a scene from row <strong>A</strong>; pick which baseline to compare against in row <strong>B</strong>. Cameras are synced — drag either viewer to orbit both.
+  </p>
+
+  <div class="viewer-panel">
+    <div class="viewer-stage two-up">
+      <div class="viewer-side viewer-side-input">
+        <div class="viewer-label">Input image</div>
+        <img id="viewer-input-img"
+             class="viewer-input-img"
+             src="models/scrream_scene01_full_00_000055/input.jpg"
+             alt="Input RGB image">
+      </div>
+      <div class="viewer-side">
+        <div class="viewer-label" id="viewer-right-label">NOVA3R</div>
+        <model-viewer id="viewer-right"
+                      class="viewer-mv"
+                      src="models/scrream_scene01_full_00_000055/nova3r.glb"
+                      alt="Baseline 3D reconstruction"
+                      camera-controls
+                      interaction-prompt="none"
+                      touch-action="pan-y"
+                      environment-image="legacy"
+                      exposure="0.95"
+                      shadow-intensity="0"
+                      camera-orbit="0deg 75deg 150%"
+                      max-camera-orbit="auto auto 150%">
+        </model-viewer>
+      </div>
+      <div class="viewer-side">
+        <div class="viewer-label viewer-label-ours">VolFill (ours)</div>
+        <model-viewer id="viewer-left"
+                      class="viewer-mv"
+                      src="models/scrream_scene01_full_00_000055/ours.glb"
+                      alt="VolFill 3D reconstruction"
+                      camera-controls
+                      interaction-prompt="none"
+                      touch-action="pan-y"
+                      environment-image="legacy"
+                      exposure="0.95"
+                      shadow-intensity="0"
+                      camera-orbit="0deg 75deg 150%"
+                      max-camera-orbit="auto auto 150%">
+        </model-viewer>
+      </div>
+    </div>
+
+    <div class="viewer-rows">
+      <div class="viewer-row">
+        <div class="viewer-row-label">A · Scene</div>
+        <!-- Thumbs are generated at runtime from SCENES in js/viewer-swap.js -->
+        <div class="viewer-thumbs" data-row="scene"></div>
+      </div>
+
+      <div class="viewer-row">
+        <div class="viewer-row-label">B · Compare with</div>
+        <!-- Thumbs are generated at runtime from BASELINES in js/viewer-swap.js -->
+        <div class="viewer-thumbs" data-row="variant"></div>
+      </div>
+    </div>
+
+    <!-- <p class="viewer-caption" id="viewer-caption"></p> -->
+  </div>
+</section>
+
+<!-- =============================================================
+     QUANTITATIVE RESULTS
+============================================================= -->
+<section class="content">
+  <h2>Quantitative Results</h2>
+  <p>
+    We report Chamfer Distance (CD ↓, ×10<sup>2</sup>), one-way coverage APD<sub>γ</sub> (↑) on the visible and occluded subsets, and F-score FS<sub>γ</sub> (↑) on the complete geometry. Thresholds γ ∈ {0.10, 0.02} are used on SCRREAM and γ ∈ {0.10, 0.05} on NRGB-D (matching the per-benchmark conventions of LaRI / NOVA3R). Fréchet Point Cloud Distance (FPD ↓) is computed with a pretrained Uni3D feature extractor. Predictions and GT are rigidly aligned (scale + R + t, minimizing CD) before scoring. <strong>Best</strong> and <em>second-best</em> are highlighted.
+  </p>
+
+  <h3>Table 1 — 3D Reconstruction on SCRREAM</h3>
+  <div class="table-scroll">
+    <table class="results">
+      <thead>
+        <tr>
+          <th class="method" rowspan="2">Method</th>
+          <th colspan="3">Visible</th>
+          <th colspan="3">Occluded</th>
+          <th colspan="3">Complete</th>
+        </tr>
+        <tr>
+          <th>CD ↓</th><th>APD<sub>0.1</sub> ↑</th><th>APD<sub>0.02</sub> ↑</th>
+          <th>CD ↓</th><th>APD<sub>0.1</sub> ↑</th><th>APD<sub>0.02</sub> ↑</th>
+          <th>CD ↓</th><th>FS<sub>0.1</sub> ↑</th><th>FS<sub>0.02</sub> ↑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-head"><td colspan="10">Object-level generative models<sup>†</sup></td></tr>
+        <tr>
+          <td class="method">TripoSG<sup>†</sup></td>
+          <td>13.75</td><td>44.74</td><td>10.08</td>
+          <td>10.73</td><td>55.34</td><td>13.37</td>
+          <td>11.10</td><td>53.56</td><td>13.30</td>
+        </tr>
+        <tr>
+          <td class="method">TRELLIS<sup>†</sup></td>
+          <td>11.63</td><td>54.05</td><td>15.00</td>
+          <td>9.65</td><td>60.70</td><td>17.52</td>
+          <td>10.72</td><td>56.69</td><td>15.59</td>
+        </tr>
+
+        <tr class="group-head"><td colspan="10">Visible-surface baselines</td></tr>
+        <tr>
+          <td class="method">VGGT</td>
+          <td>3.04</td><td class="second">96.98</td><td>45.62</td>
+          <td>17.40</td><td>44.60</td><td>10.04</td>
+          <td>6.77</td><td>80.45</td><td>36.77</td>
+        </tr>
+        <tr>
+          <td class="method">DepthPro</td>
+          <td>3.85</td><td>95.10</td><td>33.30</td>
+          <td>15.31</td><td>48.66</td><td>9.71</td>
+          <td>6.90</td><td>80.36</td><td>28.44</td>
+        </tr>
+        <tr>
+          <td class="method">MoGe2</td>
+          <td class="best">2.28</td><td class="best">99.38</td><td class="best">57.42</td>
+          <td>15.29</td><td>50.09</td><td>10.30</td>
+          <td>5.74</td><td>83.96</td><td class="second">45.84</td>
+        </tr>
+
+        <tr class="group-head"><td colspan="10">Scene-level amodal reconstruction</td></tr>
+        <tr>
+          <td class="method">LaRI</td>
+          <td>3.43</td><td>95.48</td><td>41.61</td>
+          <td>5.23</td><td>85.25</td><td>29.31</td>
+          <td>5.19</td><td>85.43</td><td>30.85</td>
+        </tr>
+        <tr>
+          <td class="method">NOVA3R</td>
+          <td>3.20</td><td>96.77</td><td>43.75</td>
+          <td class="second">3.56</td><td class="best">94.86</td><td class="second">41.21</td>
+          <td class="second">3.43</td><td class="best">95.26</td><td>45.12</td>
+        </tr>
+        <tr class="ours">
+          <td class="method">VolFill (ours)</td>
+          <td class="second">2.84</td><td>96.10</td><td class="second">56.73</td>
+          <td class="best">3.46</td><td class="second">92.70</td><td class="best">55.53</td>
+          <td class="best">3.03</td><td class="second">95.03</td><td class="best">54.83</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-foot"><sup>†</sup> Trained on object-centric datasets; not designed for full scene reconstruction. All numbers scaled by ×10<sup>2</sup>.</p>
+
+  <h3>Table 2 — 3D Reconstruction on NRGB-D</h3>
+  <div class="table-scroll">
+    <table class="results">
+      <thead>
+        <tr>
+          <th class="method" rowspan="2">Method</th>
+          <th colspan="3">Visible</th>
+          <th colspan="3">Occluded</th>
+          <th colspan="3">Complete</th>
+        </tr>
+        <tr>
+          <th>CD ↓</th><th>APD<sub>0.1</sub> ↑</th><th>APD<sub>0.05</sub> ↑</th>
+          <th>CD ↓</th><th>APD<sub>0.1</sub> ↑</th><th>APD<sub>0.05</sub> ↑</th>
+          <th>CD ↓</th><th>FS<sub>0.1</sub> ↑</th><th>FS<sub>0.05</sub> ↑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-head"><td colspan="10">Visible-surface baselines</td></tr>
+        <tr>
+          <td class="method">VGGT</td>
+          <td class="second">3.25</td><td class="second">96.51</td><td class="second">81.63</td>
+          <td>21.38</td><td>42.15</td><td>26.35</td>
+          <td>9.44</td><td>73.85</td><td>58.91</td>
+        </tr>
+        <tr>
+          <td class="method">DepthPro</td>
+          <td>4.38</td><td>92.56</td><td>67.41</td>
+          <td>22.19</td><td>41.69</td><td>24.64</td>
+          <td>10.03</td><td>71.30</td><td>51.60</td>
+        </tr>
+        <tr>
+          <td class="method">MoGe2</td>
+          <td class="best">2.62</td><td class="best">98.46</td><td class="best">89.55</td>
+          <td>21.12</td><td>43.31</td><td>28.43</td>
+          <td>9.31</td><td class="second">75.35</td><td class="second">61.93</td>
+        </tr>
+
+        <tr class="group-head"><td colspan="10">Scene-level amodal reconstruction</td></tr>
+        <tr>
+          <td class="method">LaRI</td>
+          <td>4.09</td><td>93.77</td><td>73.51</td>
+          <td>13.04</td><td>64.53</td><td>45.82</td>
+          <td>9.79</td><td>68.37</td><td>43.47</td>
+        </tr>
+        <tr>
+          <td class="method">NOVA3R</td>
+          <td>5.05</td><td>89.63</td><td>64.44</td>
+          <td class="second">8.31</td><td class="second">80.50</td><td class="second">58.55</td>
+          <td class="second">8.19</td><td>73.99</td><td>49.92</td>
+        </tr>
+        <tr class="ours">
+          <td class="method">VolFill (ours)</td>
+          <td>4.52</td><td>90.06</td><td>69.22</td>
+          <td class="best">6.97</td><td class="best">81.41</td><td class="best">62.48</td>
+          <td class="best">6.44</td><td class="best">84.35</td><td class="best">63.92</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Table 3 — Metric Geometry Evaluation</h3>
+  <p>
+    Evaluation on the metric-scale frame (no Sim(3) alignment). Distributional similarity is measured by Fréchet Point Cloud Distance using a pretrained Uni3D feature extractor.
+  </p>
+  <div class="table-scroll">
+    <table class="results compact">
+      <thead>
+        <tr>
+          <th class="method">Method</th>
+          <th>CD ↓</th>
+          <th>FS<sub>0.02</sub> ↑</th>
+          <th>FPD ↓</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="method">LaRI</td>
+          <td>11.43</td><td>11.47</td><td>—</td>
+        </tr>
+        <tr>
+          <td class="method">NOVA3R</td>
+          <td class="second">6.56</td><td class="second">22.23</td><td class="second">16.50</td>
+        </tr>
+        <tr class="ours">
+          <td class="method">VolFill (ours)</td>
+          <td class="best">3.88</td><td class="best">44.90</td><td class="best">4.86</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- =============================================================
+     ABLATIONS
+============================================================= -->
+<section class="content">
+  <h2>Ablations</h2>
+
+  <h3>Conditioning strategy</h3>
+  <p>
+    Removing the visible-latent inpainting signal causes the DiT to drift from the input geometry; removing MoGe cross-attention loses high-level semantic context. The two conditioning paths are complementary.
+  </p>
+  <figure class="fig-wide">
+    <img src="figures/ablation_cond.jpg" alt="Conditioning ablation" style="max-width: 80%;">
+  </figure>
+
+  <h3>VAE reconstruction fidelity</h3>
+  <p>
+    The hybrid sparse-dense VAE preserves fine surface detail at 256<sup>3</sup> resolution despite 16× spatial compression, outperforming a fully-dense baseline of the same parameter count.
+  </p>
+  <figure class="fig-wide">
+    <img src="figures/quali_vae.jpg" alt="VAE reconstruction qualitative">
+  </figure>
+</section>
+
+<!-- =============================================================
+     LIMITATIONS
+============================================================= -->
+<section class="content limitations">
+  <h2>Limitations</h2>
+  <ul>
+    <li><strong>Residual holes in unobserved regions.</strong> While VolFill produces sharper geometry with fewer artifacts than NOVA3R and LaRI, small holes can occasionally persist behind heavily occluded surfaces — synthesizing geometry where no visual evidence exists remains fundamentally underdetermined. Scaling model capacity and data diversity is a natural path to closing the remaining topological gaps.</li>
+    <li><strong>Iterative inference cost.</strong> As a generative framework, VolFill runs a 50-step Euler ODE solver with classifier-free guidance, which takes ~1.4&nbsp;s on an RTX&nbsp;4090 — still slower than single-pass regression baselines. Step distillation and consistency-style training are promising directions for faster sampling.</li>
+  </ul>
+</section>
+
+<!-- =============================================================
+     SUPPLEMENTARY VIDEO
+============================================================= -->
+<section class="content">
+  <h2>Supplementary Video</h2>
+  <p>Denoising trajectories, additional qualitative results, and comparisons against baselines.</p>
+  <video class="video-supp" controls preload="metadata" poster="">
+    <source src="videos/video_supp.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</section>
+
+<!-- =============================================================
+     BIBTEX  (TODO: replace once arXiv ID is assigned)
+============================================================= -->
+<section class="content bibtex" id="bibtex">
+  <h2>BibTeX</h2>
+  <pre>@article{ngo2026volfill,
+  title   = {VolFill: Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching},
+  author  = {Ngo, Tuan Duc and Gan, Chuang and Kalogerakis, Evangelos},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+</section>
+
+<footer class="footer">
+  © 2026 · Page template adapted from <a href="https://cvlab-kaist.github.io/TrackCraft3R/" target="_blank" rel="noopener">TrackCraft3R</a> / <a href="https://st4rtrack.github.io/" target="_blank" rel="noopener">St4RTrack</a>. 3D viewer pattern adapted from <a href="https://dage-3d.github.io/" target="_blank" rel="noopener">DAGE</a>.
+</footer>
+
+<script src="js/teaser-viewer.js"></script>
+<script src="js/viewer-swap.js"></script>
+</body>
+</html>
