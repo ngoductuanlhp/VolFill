@@ -167,6 +167,8 @@
 ============================================================= -->
 <section class="content">
   <h2>Qualitative Results</h2>
+
+  <h3>Interactive comparison</h3>
   <p>
     A selected baseline (middle) is shown side-by-side with <strong>VolFill</strong> (right). Pick a scene from row <strong>A</strong>; pick which baseline to compare against in row <strong>B</strong>. Cameras are synced — drag either viewer to orbit both.
   </p>
@@ -230,6 +232,24 @@
 
     <!-- <p class="viewer-caption" id="viewer-caption"></p> -->
   </div>
+
+  <h3>Comparison with amodal baselines</h3>
+  <figure class="fig-wide">
+    <img src="figures/quali_main.jpg" alt="Qualitative comparison against MoGe2, LaRI, and NOVA3R on SCRREAM and NRGB-D">
+    <figcaption><strong>Figure 4 (paper).</strong> VolFill synthesizes sharp, high-fidelity amodal geometry, whereas LaRI produces layered artifacts <span style="color:#c0392b;">(red circles)</span> and holes, and NOVA3R yields noisy, unstructured point scatters <span style="color:#27ae60;">(green circles)</span>.</figcaption>
+  </figure>
+
+  <h3>Comparison with pixel-aligned approaches</h3>
+  <figure class="fig-wide">
+    <img src="figures/quali_pixel_align.jpg" alt="Qualitative comparison with pixel-aligned approaches MoGe2 and DepthAnything3" style="max-width: 90%;">
+    <figcaption><strong>Figure 8 (paper).</strong> Pixel-aligned methods (MoGe2, DepthAnything3) recover only visible surfaces and leave significant holes behind occluders, whereas VolFill reconstructs complete, physically plausible amodal geometry that closely matches the ground truth.</figcaption>
+  </figure>
+
+  <h3>Point cloud and mesh quality</h3>
+  <figure class="fig-wide">
+    <img src="figures/quali_supp_mesh.jpg" alt="Point cloud and mesh comparison against LaRI and NOVA3R">
+    <figcaption><strong>Figure 9 (paper).</strong> Side-by-side point clouds and meshes for each method. The structured TUDF grid lets VolFill extract clean, topologically consistent meshes directly via isosurfacing, while LaRI and NOVA3R rely on Poisson reconstruction over unstructured points and produce fragmented, artifact-heavy meshes.</figcaption>
+  </figure>
 </section>
 
 <!-- =============================================================
@@ -416,19 +436,88 @@
 
   <h3>Conditioning strategy</h3>
   <p>
-    Removing the visible-latent inpainting signal causes the DiT to drift from the input geometry; removing MoGe cross-attention loses high-level semantic context. The two conditioning paths are complementary.
+    Relying only on the visible latent (① in the figure) fails to recover unobserved structure; image-only conditioning with DINOv2 (②) or MoGe2 (③) hallucinates rough layouts but loses fine detail. The dual setup (④) — MoGe2 cross-attention <em>plus</em> additive injection of the visible latent — yields the sharpest, most complete geometry, with quantitative agreement in Table 5 below.
   </p>
   <figure class="fig-wide">
     <img src="figures/ablation_cond.jpg" alt="Conditioning ablation" style="max-width: 80%;">
   </figure>
 
-  <h3>VAE reconstruction fidelity</h3>
+  <p class="table-title" style="text-align:center;margin:18px 0 0;"><strong>Table 5 — Conditioning ablation.</strong></p>
+  <div class="table-scroll">
+    <table class="results compact">
+      <thead>
+        <tr>
+          <th class="method">Config.</th>
+          <th><em>F</em><sub>GFM</sub></th>
+          <th><em>z</em><sub>vis</sub></th>
+          <th>CD ↓</th>
+          <th>FS<sub>0.02</sub> ↑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="2" class="method">Single</td>
+          <td>✗</td>
+          <td>Add</td>
+          <td>6.80</td>
+          <td>31.72</td>
+        </tr>
+        <tr>
+          <td>MoGe2</td>
+          <td>✗</td>
+          <td>3.81</td>
+          <td>46.80</td>
+        </tr>
+        <tr>
+          <td rowspan="2" class="method">Dual</td>
+          <td>MoGe2</td>
+          <td>Concat</td>
+          <td class="second">3.66</td>
+          <td class="second">48.94</td>
+        </tr>
+        <tr class="ours">
+          <td>MoGe2</td>
+          <td>Add</td>
+          <td class="best">3.03</td>
+          <td class="best">54.83</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Foundation model</h3>
   <p>
-    The hybrid sparse-dense VAE preserves fine surface detail at 256<sup>3</sup> resolution despite 16× spatial compression, outperforming a fully-dense baseline of the same parameter count.
+    Replacing MoGe2 with the semantic-only DINOv2 backbone collapses reconstruction quality — semantic tokens alone lack the 3D spatial anchors the DiT needs. VGGT improves over DINOv2 but still lags MoGe2, indicating that <em>structural consistency</em> from a geometry-trained backbone is a stronger prior than general semantic reasoning for amodal completion.
   </p>
-  <figure class="fig-wide">
-    <img src="figures/quali_vae.jpg" alt="VAE reconstruction qualitative">
-  </figure>
+  <p class="table-title" style="text-align:center;margin:18px 0 0;"><strong>Table 6 — Foundation model ablation.</strong></p>
+  <div class="table-scroll">
+    <table class="results compact">
+      <thead>
+        <tr>
+          <th class="method">Conditioning</th>
+          <th>CD ↓</th>
+          <th>FS<sub>0.02</sub> ↑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="method">DINOv2</td>
+          <td>5.46</td>
+          <td>35.98</td>
+        </tr>
+        <tr>
+          <td class="method">VGGT</td>
+          <td>4.32</td>
+          <td>42.30</td>
+        </tr>
+        <tr class="ours">
+          <td class="method">MoGe2</td>
+          <td class="best">3.81</td>
+          <td class="best">46.80</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <!-- =============================================================
