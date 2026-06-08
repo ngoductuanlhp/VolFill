@@ -6,7 +6,7 @@
   <title>VolFill: Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching</title>
   <meta name="description" content="VolFill recovers complete 3D scene geometry — including occluded surfaces — from a single RGB image, using a hybrid 3D VAE and a latent diffusion transformer trained with flow matching.">
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=15">
   <link rel="icon" href="figures/volfill_favicon.png" type="image/png">
 
   <!-- MathJax for inline LaTeX -->
@@ -31,16 +31,22 @@
     <span class="subtitle-inline">Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching</span>
   </h1>
 
-  <!-- TODO: replace placeholder authors with the real list before publishing. -->
   <p class="authors">
-    <span><a href="https://ngoductuanlhp.github.io/" target="_blank" rel="noopener">Tuan Duc Ngo</a><sup>1</sup></span>
-    <span><a href="https://people.csail.mit.edu/ganchuang/"  target="_blank" rel="noopener">Chuang Gan</a><sup>1</sup></span>
-    <span><a href="https://kalo-ai.github.io/" target="_blank" rel="noopener">Evangelos Kalogerakis</a><sup>1,2</sup></span>
+    <span class="author-item"><a class="author" href="https://ngoductuanlhp.github.io/" target="_blank" rel="noopener">Tuan Duc Ngo</a><sup>1</sup></span>
+    <span class="author-item"><a class="author" href="https://people.csail.mit.edu/ganchuang/" target="_blank" rel="noopener">Chuang Gan</a><sup>1</sup></span>
+    <span class="author-item"><a class="author" href="https://kalo-ai.github.io/" target="_blank" rel="noopener">Evangelos Kalogerakis</a><sup>1,2</sup></span>
   </p>
-  <p class="affiliations">
-    <span><sup>1</sup> UMass Amherst</span>
-    <span><sup>2</sup> TU Crete</span>
-  </p>
+  <div class="affiliations">
+    <div class="affil">
+      <span class="affil-logo-box"><img class="affil-logo" src="figures/icons/umass_logo.png" alt="University of Massachusetts Amherst"></span>
+      <span class="affil-name"><sup>1</sup>University of Massachusetts&nbsp;Amherst</span>
+    </div>
+    <div class="affil-divider" aria-hidden="true"></div>
+    <div class="affil">
+      <span class="affil-logo-box"><img class="affil-logo affil-logo-tall" src="figures/icons/tu_crete.png" alt="Technical University of Crete"></span>
+      <span class="affil-name"><sup>2</sup>Technical University of&nbsp;Crete</span>
+    </div>
+  </div>
 
   <div class="actions">
     <a class="btn" href="paper/volfill.pdf" target="_blank" rel="noopener">📄 Paper</a>
@@ -55,8 +61,9 @@
 ============================================================= -->
 <section class="content">
   <h2>Amodal 3D Reconstruction from a Single Image</h2>
-  <p>
-    <span class="hl-grad"><strong>VolFill</strong> recovers the complete 3D scene</span> — including occluded surfaces behind the visible geometry — from a single RGB image. The reconstruction is represented as a Truncated Unsigned Distance Function (TUDF) grid, decoded into a point cloud.
+  <p class="tldr">
+    <span class="tldr-tag">TL;DR</span> VolFill recovers the <span class="tldr-hl">complete 3D scene geometry </span> from a <span class="tldr-hl">single RGB image</span> — including occluded surfaces hidden behind the visible geometry.
+    <!-- <span class="tldr-tag">TL;DR</span> VolFill recovers the <span class="tldr-hl">complete 3D scene</span> from a <span class="tldr-hl">single RGB image</span> — including occluded surfaces hidden behind the visible geometry. The scene is represented as a Truncated Unsigned Distance Function (TUDF) grid that decodes into a point cloud. We train a <span class="tldr-hl">hybrid 3D VAE</span> that compresses the TUDF grid into a <span class="tldr-hl">compact latent</span>. A <span class="tldr-hl">latent DiT with flow matching</span> then generates the complete geometry in that latent space — <span class="tldr-hl">conditioned on a frozen geometry foundation model</span> and anchored to the visible surfaces. -->
   </p>
 
   <div class="viewer-panel">
@@ -86,19 +93,56 @@
 </section>
 
 <!-- =============================================================
+     SECTION NAV — anchor links; smooth-scrolls to each section.
+============================================================= -->
+<nav class="section-nav" aria-label="Section navigation">
+  <a href="#abstract">Abstract</a>
+  <a href="#contributions">Contributions</a>
+  <a href="#task">Task</a>
+  <a href="#method">Method</a>
+  <a href="#training">Training</a>
+  <a href="#qualitative">Qualitative</a>
+  <a href="#quantitative">Quantitative</a>
+  <a href="#ablations">Ablations</a>
+  <a href="#bibtex">BibTeX</a>
+</nav>
+
+<!-- =============================================================
      ABSTRACT
 ============================================================= -->
-<section class="content">
-  <h2 style="text-align:center;">Abstract</h2>
-  <p>
+<section class="content" id="abstract">
+  <h2> Abstract</h2>
+  <p class="abstract">
     Reconstructing the complete geometry of a scene from a single RGB image remains challenging — especially when inferring hidden structures where visual evidence is incomplete. We introduce <strong class="hl-grad">VolFill</strong>, a generative framework that predicts the 3D structure of the <em>complete</em> scene rather than relying on traditional pixel-aligned regression. Our method utilizes a hybrid 3D VAE to compress sparse truncated unsigned distance function grids into a compact latent space, paired with a latent Diffusion Transformer that denoises this representation to recover the complete scene. We condition the generation on geometry foundation models, leveraging rich spatial priors for robust reasoning. Unlike existing methods limited by per-ray constraints or unstructured point-cloud queries, <strong>VolFill</strong> provides a structured representation that supports direct surface extraction and occupancy queries at scale. Extensive experiments on the SCRREAM and NRGB-D datasets demonstrate that our approach significantly outperforms current baselines, providing a robust foundation for holistic spatial understanding.
   </p>
 </section>
 
 <!-- =============================================================
+     CONTRIBUTIONS
+============================================================= -->
+<section class="content" id="contributions">
+  <!-- <span class="section-eyebrow">Contributions</span> -->
+  <h2> Contributions</h2>
+  <div class="contrib-grid">
+    <div class="contrib-card">
+      <h3>Volumetric Flow Matching</h3>
+      <p>VolFill is a generative framework that uses <strong>volumetric flow matching</strong> to recover complete, scene-level 3D geometry — including occluded surfaces — directly from a single RGB image.</p>
+    </div>
+    <div class="contrib-card">
+      <h3>Hybrid 3D VAE</h3>
+      <p>A <strong>hybrid 3D VAE</strong> compresses high-resolution TUDF grids into a compact latent space, enabling efficient yet high-fidelity reconstruction of complex amodal structures.</p>
+    </div>
+    <div class="contrib-card">
+      <h3>Dual-Conditioning Strategy</h3>
+      <p>A <strong>dual-conditioning strategy</strong> leverages geometry foundation models, fusing high-level image tokens with explicit visible geometry to guide robust amodal reasoning.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================
      TASK DEFINITION
 ============================================================= -->
-<section class="content">
+<section class="content" id="task">
   <h2>Task</h2>
   <p>
     <strong class="hl-grad">Single-view amodal 3D scene reconstruction.</strong> Given one RGB image $\mathbf{I} \in \mathbb{R}^{H \times W \times 3}$ of an indoor scene, we seek to recover the complete scene geometry $S$ within the camera frustum — including surfaces behind the visible foreground.
@@ -108,7 +152,7 @@
 <!-- =============================================================
      METHOD
 ============================================================= -->
-<section class="content">
+<section class="content" id="method">
   <h2>Method</h2>
   <!-- <p>
     We represent the scene as a <strong>Truncated Unsigned Distance Function (TUDF)</strong> $V \in \mathbb{R}^{N \times N \times N}$ at resolution $N = 256$, where each voxel stores the distance to the nearest physical surface $\mathcal{S}$ clipped at a maximum value $\tau$: $V(\mathbf{p}) = \min(\mathrm{dist}(\mathbf{p}, \mathcal{S}), \tau)$. We use the <em>unsigned</em> formulation because indoor scenes are frequently non-watertight — common open geometries such as single-sided walls, floors, and furniture have no globally consistent inside/outside orientation, making a signed distance ill-defined beyond the immediate voxel neighborhood. The TUDF grid is a flexible geometric proxy: surfaces are extracted as point clouds by thresholding $|V(\mathbf{p})| < \epsilon_{\text{tudf}}$, or converted to clean watertight meshes via MeshUDF.
@@ -162,10 +206,29 @@
 </section>
 
 <!-- =============================================================
+     TRAINING DETAILS
+============================================================= -->
+<section class="content" id="training">
+  <h2>Training Details</h2>
+
+  <h3>Datasets</h3>
+  <p>
+    We train on synthetic <strong>3D-FRONT</strong> (96k image–TUDF pairs) and real-world <strong>ScanNet++</strong> (46k samples), following the data splits of LaRI and NOVA3R.
+  </p>
+
+  <h3>Training stages</h3>
+  <p>Both stages use AdamW with mixed-precision training on two A6000 / L40S GPUs:</p>
+  <ul class="method-bullets">
+    <li><strong>Stage 1 — Hybrid 3D VAE.</strong> Compresses the TUDF grids into the compact latent space.</li>
+    <li><strong>Stage 2 — Latent DiT.</strong> Generates the latent via flow matching, with classifier-free guidance at inference.</li>
+  </ul>
+</section>
+
+<!-- =============================================================
      QUALITATIVE RESULTS  (side-by-side <model-viewer>)
      TODO: populate models/<scene>/ via scripts/build_glb_assets.py
 ============================================================= -->
-<section class="content">
+<section class="content" id="qualitative">
   <h2>Qualitative Results</h2>
 
   <h3>Interactive comparison</h3>
@@ -255,7 +318,7 @@
 <!-- =============================================================
      QUANTITATIVE RESULTS
 ============================================================= -->
-<section class="content">
+<section class="content" id="quantitative">
   <h2>Quantitative Results</h2>
   <p>
     We report Chamfer Distance (CD ↓, ×10<sup>2</sup>), one-way coverage APD<sub>γ</sub> (↑) on the visible and occluded subsets, and F-score FS<sub>γ</sub> (↑) on the complete geometry. Thresholds γ ∈ {0.10, 0.02} are used on SCRREAM and γ ∈ {0.10, 0.05} on NRGB-D. Fréchet Point Cloud Distance (FPD ↓) is computed with a pretrained Uni3D feature extractor. Predictions and GT are rigidly aligned (scale + rotation + translation) before scoring. <strong>Best</strong> and <em>second-best</em> are highlighted.
@@ -443,7 +506,7 @@
 <!-- =============================================================
      ABLATIONS
 ============================================================= -->
-<section class="content">
+<section class="content" id="ablations">
   <h2>Ablations</h2>
 
   <h3>Conditioning strategy</h3>
@@ -566,13 +629,28 @@
   journal = {arXiv preprint},
   year    = {2026}
 }</pre>
+
+  <h3 class="ref-heading">References</h3>
+  <ol class="references">
+    <li>Wang et al., <em>MoGe-2: Accurate Monocular Geometry with Metric Scale and Sharp Details</em>, NeurIPS 2025.</li>
+    <li>Lin et al., <em>Depth Anything 3: Recovering the Visual Space from Any Views</em>, ICLR 2026.</li>
+    <li>Bochkovskii et al., <em>Depth Pro: Sharp Monocular Metric Depth in Less Than a Second</em>, ICLR 2025.</li>
+    <li>Wang et al., <em>VGGT: Visual Geometry Grounded Transformer</em>, CVPR 2025.</li>
+    <li>Li et al., <em>LaRI: Layered Ray Intersections for Single-view 3D Geometric Reasoning</em>, arXiv 2025.</li>
+    <li>Chen et al., <em>NOVA3R: Non-pixel-aligned Visual Transformer for Amodal 3D Reconstruction</em>, ICLR 2026.</li>
+    <li>Li et al., <em>TripoSG: High-Fidelity 3D Shape Synthesis using Large-Scale Rectified Flow Models</em>, arXiv 2025.</li>
+    <li>Xiang et al., <em>Structured 3D Latents for Scalable and Versatile 3D Generation</em> (TRELLIS), CVPR 2025.</li>
+    <li>Jung et al., <em>SCRREAM: SCan, Register, REnder And Map — A Framework for Annotating Accurate and Dense 3D Indoor Scenes with a Benchmark</em>, NeurIPS 2024.</li>
+    <li>Azinović et al., <em>Neural RGB-D Surface Reconstruction</em> (NRGB-D), CVPR 2022.</li>
+    <li>Zhou et al., <em>Uni3D: Exploring Unified 3D Representation at Scale</em>, ICLR 2024.</li>
+  </ol>
 </section>
 
 <footer class="footer">
   © 2026 · Page template adapted from <a href="https://cvlab-kaist.github.io/TrackCraft3r/" target="_blank" rel="noopener">TrackCraft3R</a> / <a href="https://st4rtrack.github.io/" target="_blank" rel="noopener">St4RTrack</a>. 3D viewer pattern adapted from <a href="https://ngoductuanlhp.github.io/dage-site/" target="_blank" rel="noopener">DAGE</a>.
 </footer>
 
-<script src="js/teaser-viewer.js"></script>
-<script src="js/viewer-swap.js"></script>
+<script src="js/teaser-viewer.js?v=2"></script>
+<script src="js/viewer-swap.js?v=2"></script>
 </body>
 </html>
