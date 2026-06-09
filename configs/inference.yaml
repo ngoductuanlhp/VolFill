@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# VolFill — inference config (visible-latent conditioned latent DiT, 16x VAE)
+#
+# Holds only the architecture / sampler settings the inference pipeline reads;
+# all keys are flattened into a flat namespace by load_config().
+#
+# Checkpoint paths below are placeholders — override on the command line:
+#   python -m volfill.amodal.inference_latent_visible \
+#       --config configs/inference.yaml \
+#       --dit_checkpoint <dit.pth> --vae_checkpoint <vae.pth> \
+#       --input_path <image.jpg> --output ./results/
+# ---------------------------------------------------------------------------
+
+data:
+  # Latent normalization stats (mean/std) applied before/after the DiT.
+  # Visible-latent normalization falls back to these when unset.
+  latent_stats: assets/latent_stats_16x.npy
+  # visible_latent_stats: assets/visible_latent_stats_16x.npy  # optional
+  truncation_voxels: 3.0          # TUDF truncation (voxel units); must match training
+
+vae:
+  # VAE used to encode the visible TUDF and decode the sampled latent.
+  vae_checkpoint: checkpoints/volfill_vae.pth   # placeholder — pass --vae_checkpoint
+  vae_type: sparse_encoder
+  vae_latent_channels: 16
+  vae_encoder_channels: [32, 64, 128, 256, 512]
+  vae_num_res_blocks: 2
+  vae_num_res_blocks_middle: 2
+  vae_norm_type: layer
+  vae_sparse_band_tau: 0.5
+  vae_sparse_dilate: 1
+  vae_sparse_min_voxels: 64
+  vae_light_decoder: true
+  vae_pointwise_from_level: 2
+  vae_decoder_type: sparse_gated
+  vae_sparse_dec_channels: 32
+  vae_sparse_dec_num_res_blocks: 2
+  vae_tau_surface: 0.5
+  vae_occ_resolution: 64
+  vae_occ_threshold: 0.5
+  vae_gt_mask_fixed_active: 28000
+
+model:
+  latent_channels: 16        # must match vae_latent_channels
+  visible_channels: 16       # same VAE encoder is used for the visible latent
+  vis_cond_mode: add         # zero-init add of the visible latent into the noisy latent
+  model_channels: 768        # DiT hidden dim
+  num_blocks: 12             # transformer blocks
+  num_heads: 12              # attention heads
+  patch_size: 1              # 3D patch size over the latent grid
+  cond_channels: 768         # MoGe token dim (output of MoGeConditioner)
+  use_checkpoint: false
+  qk_rms_norm: true
+  qk_rms_norm_cross: false
+  moge_model_name: Ruicheng/moge-2-vitl
+
+# Sampler defaults (override with --cfg_strength / --steps).
+sampler:
+  sigma_min: 1.0e-5
+  val_cfg: 3.0               # CFG guidance scale
+  val_steps: 50             # Euler ODE steps

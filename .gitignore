@@ -1,0 +1,44 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Environments
+.venv
+venv/
+env/
+ENV/
+.env
+
+# Editors
+.vscode/
+.idea/
+
+# Model weights (download separately — see README)
+checkpoints/
+*.pth
+*.ckpt
+
+# Inference outputs
+results/
+output/
+*.ply
+*.obj
+*.mtl
+*.npz
+
+# Logs / tmp
+*.log
+tmp/
+
+# Note: small *.npy assets (e.g. assets/latent_stats_16x.npy) are tracked.

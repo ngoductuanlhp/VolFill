@@ -1,0 +1,56 @@
+# VolFill — inference runtime requirements
+#
+# Targets CUDA 13.0 / RTX 40-series.
+# Install order:
+#   1. conda create -n volfill python=3.11 -y && conda activate volfill
+#   2. pip install -U pip setuptools wheel ninja
+#   3. Torch first (so the from-source build below links the right ABI):
+#        pip install --extra-index-url https://download.pytorch.org/whl/cu130 \
+#            torch==2.10.0+cu130 torchvision==0.25.0+cu130 triton==3.6.0
+#   4. pip install -r requirements.txt
+#
+# The PyTorch index hosts the cu130 torch wheels; the rathaROG index hosts the
+# only spconv-cu130 / cumm-cu130 wheels (not on PyPI). utils3d builds from git.
+--extra-index-url https://download.pytorch.org/whl/cu130
+--extra-index-url https://ratharog.github.io/cumm-spconv/
+
+# === Torch stack (cu130) ===
+torch==2.10.0+cu130
+torchvision==0.25.0+cu130
+triton==3.6.0
+
+# === Sparse 3D convolutions (TRELLIS sparse encoder/decoder backend) ===
+spconv-cu130==2.4.0
+cumm-cu130==0.9.1
+
+# === Geometry (MoGe dependency — builds from source) ===
+utils3d @ git+https://github.com/EasternJournalist/utils3d.git@3913c65d81e05e47b9f367250cf8c0f7462a0900
+
+# === Model / checkpoint IO ===
+huggingface_hub==1.13.0
+hf-xet==1.4.3
+safetensors==0.7.0
+
+# === Config ===
+omegaconf==2.3.0
+
+# === Scientific / image ===
+numpy==2.4.3
+scipy==1.17.1
+opencv-python-headless==4.13.0.92
+Pillow==12.2.0
+tqdm==4.67.3
+
+# === Optional ===
+# GPU-accelerated EDT for the visible-TUDF step (SciPy CPU fallback otherwise):
+# cupy-cuda13x==14.0.1
+# Faster DINOv2 attention in MoGe (PyTorch native SDPA fallback otherwise):
+# xformers==0.0.35
+# Point-cloud / mesh export & visualization:
+# open3d==0.19.0
+# Interactive point-cloud viewer for volfill.visualize (+ nicer colormap):
+# viser
+# matplotlib
+# Mesh extraction for `volfill.visualize --method marching_cubes`:
+# scikit-image
+# trimesh
