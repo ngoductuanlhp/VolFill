@@ -63,7 +63,7 @@ export function buildCarousel(root, ids, modelsRoot, onSelect) {
     b.className = 'thumb';
     b.setAttribute('role', 'option');
     b.setAttribute('aria-selected', 'false');
-    b.setAttribute('aria-label', `Scene ${i + 1}`);
+    b.setAttribute('aria-label', `Scene ${String(i + 1).padStart(2, '0')}`);
     b.tabIndex = -1;
     b.dataset.index = String(i);
     const img = document.createElement('img');

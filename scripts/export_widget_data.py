@@ -7,6 +7,9 @@ W1  TUDF slice   -> media/widgets/tudf-slice.png (8-bit distance, voxels) + tudf
 W2  Denoising trajectory -> media/widgets/flow/<name>/step_XX.webp + flow.json
     python scripts/export_widget_data.py flow --traj_dir runs/web_traj/out/<scene>/<frame> --name scene09
 
+Teaser poster -> media/teaser-poster.webp (shown until <model-viewer> loads)
+    python scripts/export_widget_data.py poster --glb models/$(head -1 models/valid_samples_teaser.txt)/ours.glb
+
 Points live in the OpenCV camera frame (+x right, +y down, +z forward), matching build_quali_glbs.py.
 """
 import argparse
@@ -37,7 +40,7 @@ def plasma(t):
     return PLASMA[i] * (1 - f) + PLASMA[i + 1] * f
 
 
-def load_glb_points(path):
+def load_glb_points(path, with_colors=False):
     data = Path(path).read_bytes()
     _, _, _ = struct.unpack_from("<III", data, 0)
     jlen, _ = struct.unpack_from("<II", data, 12)
@@ -50,7 +53,13 @@ def load_glb_points(path):
     pts = np.frombuffer(binbuf, np.float32, acc["count"] * 3, off).reshape(-1, 3).copy()
     pts[:, 1] *= -1  # GLTF -> OpenCV
     pts[:, 2] *= -1
-    return pts
+    if not with_colors:
+        return pts
+    cacc = gltf["accessors"][gltf["meshes"][0]["primitives"][0]["attributes"]["COLOR_0"]]
+    cview = gltf["bufferViews"][cacc["bufferView"]]
+    coff = cview.get("byteOffset", 0) + cacc.get("byteOffset", 0)
+    col = np.frombuffer(binbuf, np.uint8, cacc["count"] * 4, coff).reshape(-1, 4)[:, :3] / 255.0
+    return pts, col
 
 
 # ----------------------------------------------------------------------------- W1
@@ -116,7 +125,7 @@ def project(pts, basis):
     return pts @ right, -(pts @ up), pts @ f
 
 
-def render_points(pts, colors, size, basis, fit):
+def render_points(pts, colors, size, basis, fit, splat=2):
     W, H = size
     u, v, depth = project(pts, basis)
     (u0, v0), scale = fit
@@ -126,8 +135,8 @@ def render_points(pts, colors, size, basis, fit):
     img = np.zeros((H, W, 4), np.uint8)
     rgb = (colors * 255).astype(np.uint8)[order]
     u, v = u[order], v[order]
-    for du in (0, 1):
-        for dv in (0, 1):
+    for du in range(splat):
+        for dv in range(splat):
             uu, vv = u + du, v + dv
             ok = (uu >= 0) & (uu < W) & (vv >= 0) & (vv < H)
             img[vv[ok], uu[ok], :3] = rgb[ok]
@@ -183,6 +192,22 @@ def export_flow(args):
     print(f"{len(frames)} frames -> {out}  ({total / 1e6:.2f} MB)")
 
 
+def export_poster(args):
+    """Static stand-in for the hero <model-viewer> (same default orbit: front, 15 deg up)."""
+    pts, col = load_glb_points(args.glb, with_colors=True)
+    W, H = args.size
+    basis = view_basis(0.0, 15.0)
+    u, v, _ = project(pts, basis)
+    lo_u, hi_u = np.percentile(u, [0.2, 99.8])
+    lo_v, hi_v = np.percentile(v, [0.2, 99.8])
+    fit = (((lo_u + hi_u) / 2, (lo_v + hi_v) / 2), args.fill * min(W / (hi_u - lo_u), H / (hi_v - lo_v)))
+    img = render_points(pts, col, (W, H), basis, fit, splat=3)
+    out = ROOT / args.out
+    out.parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray(img, "RGBA").save(out, "WEBP", quality=80, method=6)
+    print(f"{out.relative_to(ROOT)}  {W}x{H}  {out.stat().st_size // 1024} KB")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -202,8 +227,13 @@ def main():
     f.add_argument("--yaw", type=float, default=-30)
     f.add_argument("--elev", type=float, default=38)
     f.add_argument("--max_points", type=int, default=400_000)
+    po = sub.add_parser("poster")
+    po.add_argument("--glb", required=True)
+    po.add_argument("--out", default="media/teaser-poster.webp")
+    po.add_argument("--size", type=int, nargs=2, default=[1280, 656])
+    po.add_argument("--fill", type=float, default=0.62)
     args = ap.parse_args()
-    {"tudf": export_tudf, "flow": export_flow}[args.cmd](args)
+    {"tudf": export_tudf, "flow": export_flow, "poster": export_poster}[args.cmd](args)
 
 
 if __name__ == "__main__":

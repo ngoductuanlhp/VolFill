@@ -42,9 +42,15 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="preload" as="style" href="css/sections.css" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="css/sections.css"></noscript>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous"
+        onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous"></noscript>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
           integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -76,7 +82,7 @@
 <header class="topbar" data-topbar>
   <div class="topbar-inner">
     <a class="brand" href="#top" aria-label="VolFill, back to top">
-      <img class="brand-logo" src="figures/logo/volfill_logo_128.png" width="28" height="28" alt="">
+      <img class="brand-logo" src="figures/opt/logo-56.webp" width="28" height="28" alt="">
       <span>VolFill</span>
     </a>
     <nav class="topnav" aria-label="Sections">
@@ -116,8 +122,8 @@
         <li><a href="https://kalo-ai.github.io/" target="_blank" rel="noopener">Evangelos Kalogerakis</a><sup>1,2</sup></li>
       </ul>
       <ul class="affils" aria-label="Affiliations">
-        <li><span class="logo-chip"><img src="figures/icons/umass_logo.png" width="26" height="26" alt=""></span><span><sup>1</sup>University of Massachusetts Amherst</span></li>
-        <li><span class="logo-chip"><img src="figures/icons/tu_crete.png" width="17" height="26" alt=""></span><span><sup>2</sup>Technical University of Crete</span></li>
+        <li><span class="logo-chip"><img src="figures/opt/umass-52.webp" width="26" height="26" alt=""></span><span><sup>1</sup>University of Massachusetts Amherst</span></li>
+        <li><span class="logo-chip"><img src="figures/opt/tucrete-52.webp" width="17" height="26" alt=""></span><span><sup>2</sup>Technical University of Crete</span></li>
       </ul>
 
       <div class="actions">
@@ -129,13 +135,14 @@
       </div>
     </div>
     <div class="hero-art" aria-hidden="true">
-      <img src="figures/logo/volfill_logo_512.png" width="512" height="512" alt="" fetchpriority="high">
+      <img src="figures/opt/logo-840.webp" srcset="figures/opt/logo-420.webp 420w, figures/opt/logo-840.webp 840w" sizes="420px" width="840" height="840" alt="" loading="lazy" decoding="async">
     </div>
   </div>
 
   <div class="wrap-wide">
     <figure class="teaser" data-teaser>
       <div class="stage stage-teaser" data-stage>
+        <img class="stage-poster" src="media/teaser-poster.webp" width="1280" height="656" alt="" fetchpriority="high">
         <model-viewer id="teaser-viewer" class="mv"
                       alt="VolFill 3D reconstruction of the selected scene"
                       camera-controls interaction-prompt="none" touch-action="pan-y"
@@ -143,7 +150,6 @@
                       loading="lazy" camera-orbit="0deg 75deg 112%" max-camera-orbit="auto auto 150%">
         </model-viewer>
         <div class="stage-loader" aria-hidden="true"><span></span></div>
-        <div class="stage-tag">
         <div class="stage-tag"><span class="swatch swatch-ours" aria-hidden="true"></span>VolFill · <span data-teaser-count>scene 1</span></div>
         <figure class="input-inset">
           <img id="teaser-input-img" src="models/nrgbd_kitchen_000160/input.jpg" alt="Input RGB image for the selected scene" width="518" height="406">
@@ -154,6 +160,7 @@
           <button class="icon-btn" type="button" data-fullscreen aria-label="Fullscreen"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></button>
         </div>
         <p class="stage-hint" aria-hidden="true">Drag to orbit · scroll to zoom</p>
+        <button class="btn btn-primary stage-cta" type="button" data-load-3d>Explore in 3D</button>
       </div>
       <div class="carousel" data-carousel>
         <button class="icon-btn carousel-nav" type="button" data-prev aria-label="Previous scene"><svg class="icon" aria-hidden="true"><use href="#i-chev-l"/></svg></button>
@@ -206,31 +213,16 @@
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>01</span>The problem</p>
     <h2 id="problem-title">A camera only sees first hits</h2>
+    <p class="lede">Depth models such as MoGe-2 and Depth Anything 3 predict one 3D point per pixel: where each ray <em>first</em> hits a surface. The result is a sharp 2.5D shell with nothing behind it. Amodal reconstruction asks for every surface in the camera frustum, visible or <span class="hl-occ">occluded</span>. The pixels don't determine the hidden part, so VolFill doesn't regress it. It samples it from $P(V \mid \mathbf{I})$.</p>
   </header>
-  <div class="scrolly wrap-wide" data-scrolly="s1">
-    <div class="scrolly-stage">
-      <div class="anim-frame" data-anim-frame>
-        <video class="anim" data-anim="s1" muted playsinline preload="none" aria-label="Animation: camera rays stop at the first surface, leaving occluded geometry empty"></video>
-      </div>
+  <figure class="anim-fig wrap-wide" data-anim-fig="s1">
+    <div class="anim-frame">
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: camera rays stop at the first surface; occluded surfaces are missing until VolFill generates them"></video>
     </div>
-    <ol class="scrolly-steps">
-      <li class="step" data-t="0">
-        <p>Every pixel is a ray. A depth sensor, or a monocular depth network, reports where that ray <em>first</em> hits a surface.</p>
-      </li>
-      <li class="step" data-t="1">
-        <p>Pixel-aligned methods such as MoGe-2 and Depth Anything 3 predict exactly that: one 3D point per pixel. The result is sharp, but it is a shell, a 2.5D surface facing the camera.</p>
-      </li>
-      <li class="step" data-t="2">
-        <p>Everything behind the first hit is <span class="hl-occ">occluded</span>: the floor under the table, the back of the chair, the wall behind the sofa. Pixel-aligned methods leave those regions empty.</p>
-      </li>
-      <li class="step" data-t="3">
-        <p><strong>Amodal</strong> reconstruction asks for the whole scene inside the camera frustum, visible and hidden. Given one image $\mathbf{I} \in \mathbb{R}^{H \times W \times 3}$, recover the complete geometry $S$.</p>
-      </li>
-      <li class="step" data-t="4">
-        <p>The pixels don't determine hidden geometry, so we don't regress it. We model the distribution $P(V \mid \mathbf{I})$ and <span class="hl-ours">sample</span> from it.</p>
-      </li>
-    </ol>
-  </div>
+    <figcaption class="beats" aria-label="Jump to a step of the animation">
+      <button type="button">Rays</button><button type="button">Visible shell</button><button type="button">Occluded</button><button type="button">Frustum</button><button type="button">Generate</button>
+    </figcaption>
+  </figure>
 </section>
 
 <!-- ================================================================ 02 TUDF -->
@@ -238,29 +230,16 @@
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>02</span>Representation</p>
     <h2 id="tudf-title">Distance to the nearest surface, truncated</h2>
+    <p class="lede">Each voxel of a $256^3$ grid stores its distance to the nearest surface, truncated at $\tau = 3$ voxels: $V(\mathbf{p}) = \min(\operatorname{dist}(\mathbf{p}, \mathcal{S}), \tau)$. The distance is <em>unsigned</em> because indoor geometry is open (single-sided walls, floors, furniture seen from one side), so inside and outside are undefined. Surfaces come back by thresholding $V &lt; \epsilon$ into a point cloud, or by meshing with MeshUDF.</p>
   </header>
-  <div class="scrolly wrap-wide" data-scrolly="s2">
-    <div class="scrolly-stage">
-      <div class="anim-frame" data-anim-frame>
-        <video class="anim" data-anim="s2" muted playsinline preload="none" aria-label="Animation: a 2D slice of a scene, its unsigned distance field, and truncation"></video>
-      </div>
+  <figure class="anim-fig wrap-wide" data-anim-fig="s2">
+    <div class="anim-frame">
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: a 2D slice of a real scene, its unsigned distance field, truncation, and surface extraction"></video>
     </div>
-    <ol class="scrolly-steps">
-      <li class="step" data-t="0">
-        <p>We voxelize the scene at $N = 256$. Each voxel $\mathbf{p}$ stores its distance to the nearest surface $\mathcal{S}$:</p>
-        <p class="math-block">$$V(\mathbf{p}) = \min\big(\operatorname{dist}(\mathbf{p}, \mathcal{S}),\, \tau\big)$$</p>
-      </li>
-      <li class="step" data-t="1">
-        <p>Only a thin band around the surfaces carries information, so distances are <span class="hl-blue">truncated</span> at $\tau$ (3 voxels). In a typical scene just <strong>3–5%</strong> of voxels fall inside that band.</p>
-      </li>
-      <li class="step" data-t="2">
-        <p>Why <em>unsigned</em>? Indoor geometry is open: single-sided walls, floors, furniture seen from one side. There is no consistent inside or outside, so a signed distance is ill-defined. An unsigned distance only needs <em>how far</em>, not <em>which side</em>.</p>
-      </li>
-      <li class="step" data-t="3">
-        <p>Surfaces come back out by thresholding, $V(\mathbf{p}) &lt; \epsilon$, into a point cloud, or by meshing the field directly with MeshUDF.</p>
-      </li>
-    </ol>
-  </div>
+    <figcaption class="beats" aria-label="Jump to a step of the animation">
+      <button type="button">Distance</button><button type="button">Truncation</button><button type="button">Unsigned</button><button type="button">Extraction</button>
+    </figcaption>
+  </figure>
 
   <div class="wrap-wide">
     <figure class="widget" id="widget-tudf" data-widget="tudf">
@@ -281,36 +260,20 @@
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>03</span>Hybrid 3D VAE</p>
     <h2 id="vae-title">Sparse where it can be, dense where it must be</h2>
+    <p class="lede">Only 3–5% of the voxels fall in the surface band. The encoder exploits this with sparse 3D convolutions down to a dense $16^3 \times 16$ latent. The decoder can't know in advance where the surfaces are. It upsamples densely to $64^3$ (about 262K voxels), lets an occupancy head prune empty cells, then finishes at $256^3$ with sparse convolutions, so cost scales with surface area rather than volume.</p>
   </header>
-  <div class="scrolly wrap-wide" data-scrolly="s3">
-    <div class="scrolly-stage">
-      <div class="anim-frame" data-anim-frame>
-        <video class="anim" data-anim="s3" muted playsinline preload="none" aria-label="Animation: sparse encoder to a 16 cubed latent, dense then sparse decoder"></video>
-      </div>
+  <figure class="anim-fig wrap-wide" data-anim-fig="s3">
+    <div class="anim-frame">
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: sparse encoder to a 16 cubed latent, dense upsampling, occupancy pruning, sparse upsampling"></video>
     </div>
-    <ol class="scrolly-steps">
-      <li class="step" data-t="0">
-        <p>A $256^3$ grid has 16.7 million voxels, but only the surface band matters. The encoder $\mathcal{E}$ reads the TUDF as a <span class="hl-blue">sparse tensor</span> of active voxels.</p>
-      </li>
-      <li class="step" data-t="1">
-        <p>Sparse 3D convolutions with strided downsampling shrink the grid 16× per axis. Only at the bottleneck is it densified, into a $16^3 \times 16$ latent with a KL regulariser.</p>
-      </li>
-      <li class="step" data-t="2">
-        <p>Decoding is harder: the decoder $\mathcal{D}$ doesn't know where the surfaces are. It first upsamples <span class="hl-teal">densely</span>, $16^3 \to 64^3$, where about 262K voxels are still cheap.</p>
-      </li>
-      <li class="step" data-t="3">
-        <p>At $64^3$ an <strong>occupancy head</strong> predicts which voxels are surface-adjacent and prunes the rest.</p>
-      </li>
-      <li class="step" data-t="4">
-        <p>Sparse convolutions take the survivors to $256^3$. Memory now scales with surface <em>area</em>, not scene volume.</p>
-      </li>
-    </ol>
-  </div>
-  <div class="wrap-read prose">
-    <p>The VAE is trained with an L1 distance loss on active voxels, occupancy supervision, and a light KL term:</p>
-    <p class="math-block">$$\mathcal{L}_{\text{VAE}} = \mathcal{L}_1(\hat V, V_{\text{gt}}) + \lambda_{\text{bce}}\,\mathrm{BCE}(\hat O, O_{\text{gt}}) + \lambda_{\text{dice}}\,\mathrm{Dice}(\hat O, O_{\text{gt}}) + \lambda_{\text{kl}}\,\mathcal{L}_{\text{KL}}$$</p>
+    <figcaption class="beats" aria-label="Jump to a step of the animation">
+      <button type="button">Sparse input</button><button type="button">Encode</button><button type="button">Dense ↑ 64³</button><button type="button">Prune</button><button type="button">Sparse ↑ 256³</button>
+    </figcaption>
+  </figure>
+  <div class="wrap-read fig-actions">
+    <p class="fine">Trained with an L1 loss on active voxels, BCE + Dice on occupancy, and a small KL term.</p>
     <button class="btn btn-ghost" type="button" data-lightbox="figures/opt/architecture_vae-2400.webp" data-caption="Hybrid 3D VAE architecture (paper figure).">
-      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Expand paper figure
+      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Paper figure
     </button>
   </div>
 </section>
@@ -320,29 +283,16 @@
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>04</span>Flow matching</p>
     <h2 id="flow-title">Straight lines from noise to scenes</h2>
+    <p class="lede">Rectified flow joins noise $\boldsymbol{\epsilon}$ and a data latent $\mathbf{z}_1$ with a straight line, $\mathbf{z}_t = (1 - t)\,\boldsymbol{\epsilon} + t\,\mathbf{z}_1$. Its velocity is the constant $\mathbf{u}^\star = \mathbf{z}_1 - \boldsymbol{\epsilon}$, which the diffusion transformer $\Phi$ learns to regress. At inference, VolFill integrates 50 Euler steps with classifier-free guidance from fresh noise and decodes the result with $\mathcal{D}$.</p>
   </header>
-  <div class="scrolly wrap-wide" data-scrolly="s4">
-    <div class="scrolly-stage">
-      <div class="anim-frame" data-anim-frame>
-        <video class="anim" data-anim="s4" muted playsinline preload="none" aria-label="Animation: straight noise-to-data paths and the velocity target"></video>
-      </div>
+  <figure class="anim-fig wrap-wide" data-anim-fig="s4">
+    <div class="anim-frame">
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: straight noise-to-data paths, the constant velocity target, and Euler sampling"></video>
     </div>
-    <ol class="scrolly-steps">
-      <li class="step" data-t="0">
-        <p>In latent space, generation is a path from noise to data. Draw $\boldsymbol{\epsilon} \sim \mathcal{N}(0, I)$ and pair it with a data latent $\mathbf{z}_1$.</p>
-      </li>
-      <li class="step" data-t="1">
-        <p>Rectified flow uses the straight line between them:</p>
-        <p class="math-block">$$\mathbf{z}_t = (1 - t)\,\boldsymbol{\epsilon} + t\,\mathbf{z}_1$$</p>
-      </li>
-      <li class="step" data-t="2">
-        <p>Along that line the velocity is constant, $\mathbf{u}^\star = \mathbf{z}_1 - \boldsymbol{\epsilon}$. A diffusion transformer $\Phi$ learns to regress it from $\mathbf{z}_t$, $t$ and the image condition.</p>
-      </li>
-      <li class="step" data-t="3">
-        <p>At inference we start from fresh noise, integrate the learned ODE with 50 Euler steps and classifier-free guidance, and decode the result with $\mathcal{D}$.</p>
-      </li>
-    </ol>
-  </div>
+    <figcaption class="beats" aria-label="Jump to a step of the animation">
+      <button type="button">Noise &amp; data</button><button type="button">Straight paths</button><button type="button">Velocity</button><button type="button">Sampling</button>
+    </figcaption>
+  </figure>
 
   <div class="wrap-wide">
     <figure class="widget" id="widget-flow" data-widget="flow">
@@ -363,40 +313,21 @@
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>05</span>Dual conditioning</p>
     <h2 id="cond-title">What the image says, and what it shows</h2>
+    <p class="lede">A frozen MoGe-2 encoder turns the image into tokens that enter every DiT block through <span class="hl-blue">cross-attention</span>, supplying global layout and scale. Its visible point map is also converted into a visible-only TUDF, encoded as $\mathbf{z}_{\text{vis}}$, and <span class="hl-teal">added</span> to the noisy latent through a zero-initialised MLP, $\tilde{\mathbf{z}}_t = \mathbf{z}_t + \mathrm{MLP}_0(\mathbf{z}_{\text{vis}})$. This anchors the sample to what was observed. For classifier-free guidance, the negative branch drops both conditions.</p>
   </header>
-  <div class="scrolly wrap-wide" data-scrolly="s5">
-    <div class="scrolly-stage">
-      <div class="anim-frame" data-anim-frame>
-        <video class="anim" data-anim="s5" muted playsinline preload="none" aria-label="Animation: MoGe-2 tokens via cross-attention and the visible latent via a zero-initialised MLP"></video>
-      </div>
+  <figure class="anim-fig wrap-wide" data-anim-fig="s5">
+    <div class="anim-frame">
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: MoGe-2 tokens via cross-attention, the visible latent via a zero-initialised MLP, and classifier-free guidance"></video>
     </div>
-    <ol class="scrolly-steps">
-      <li class="step" data-t="0">
-        <p>The sampler needs to know <em>which</em> scene to generate. A frozen <strong>MoGe-2</strong> encoder turns the image into tokens with strong monocular-geometry priors.</p>
-      </li>
-      <li class="step" data-t="1">
-        <p><span class="badge-num">1</span> Those tokens enter every DiT block through <span class="hl-blue">cross-attention</span>. They supply global context: layout, scale, and which objects are where.</p>
-      </li>
-      <li class="step" data-t="2">
-        <p><span class="badge-num">2</span> MoGe-2 also predicts a visible point map. We turn it into a visible-only TUDF and encode it with the same VAE, giving $\mathbf{z}_{\text{vis}}$.</p>
-      </li>
-      <li class="step" data-t="3">
-        <p>$\mathbf{z}_{\text{vis}}$ is <span class="hl-teal">added</span> to the noisy latent through a zero-initialised MLP, anchoring the sample to what was actually observed:</p>
-        <p class="math-block">$$\tilde{\mathbf{z}}_t = \mathbf{z}_t + \mathrm{MLP}_0(\mathbf{z}_{\text{vis}})$$</p>
-      </li>
-      <li class="step" data-t="4">
-        <p>For classifier-free guidance, the negative branch drops both conditions (zero tokens, zero $\mathbf{z}_{\text{vis}}$), and the two velocity predictions are extrapolated.</p>
-      </li>
-    </ol>
-  </div>
-  <div class="wrap-read prose">
+    <figcaption class="beats" aria-label="Jump to a step of the animation">
+      <button type="button">Image tokens</button><button type="button">Cross-attention</button><button type="button">Visible latent</button><button type="button">Fusion</button><button type="button">Guidance</button>
+    </figcaption>
+  </figure>
+  <div class="wrap-read fig-actions">
+    <p class="fine">Trained on 3D-FRONT (96k image–TUDF pairs from 18k rooms) and ScanNet++ (46k samples), following the LaRI and NOVA3R splits.</p>
     <button class="btn btn-ghost" type="button" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent DiT and dual conditioning (paper figure).">
-      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Expand paper figure
+      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Paper figure
     </button>
-    <aside class="note" aria-label="Training details">
-      <h3>Training</h3>
-      <p>Both stages are trained on synthetic <strong>3D-FRONT</strong> (96k image–TUDF pairs from 18k rooms) and real <strong>ScanNet++</strong> (46k samples), following the LaRI and NOVA3R splits. Each stage uses AdamW with mixed precision on two A6000 / L40S GPUs.</p>
-    </aside>
   </div>
 </section>
 

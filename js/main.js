@@ -31,7 +31,7 @@ function initTopbar() {
   window.addEventListener('scroll', () => {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }, { passive: true });
-  update();
+  requestAnimationFrame(update);
 
   const links = new Map([...document.querySelectorAll('.topnav a')].map((a) => [a.hash.slice(1), a]));
   const sections = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
@@ -55,9 +55,8 @@ function initReveal() {
       if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
     }
   }, { rootMargin: '0px 0px -8% 0px' });
-  for (const el of targets) {
-    const r = el.getBoundingClientRect();
-    if (r.top < window.innerHeight) continue;
+  const below = [...targets].filter((el) => el.getBoundingClientRect().top >= window.innerHeight);
+  for (const el of below) {
     el.classList.add('reveal');
     io.observe(el);
   }
@@ -150,12 +149,13 @@ function boot() {
   initCopy();
   initReveal();
 
-  lazyInit('[data-teaser]', () => import('./viewers/teaser.js').then((m) => m.initTeaser));
+  const small = window.matchMedia('(max-width: 720px)').matches;
+  lazyInit('[data-teaser]', () => import('./viewers/teaser.js').then((m) => (el) => m.initTeaser(el, { deferred: small })));
   lazyInit('[data-compare]', () => import('./viewers/compare.js').then((m) => m.initCompare));
   lazyInit('[data-chart]', () => import('./chart.js').then((m) => m.initChart), '400px');
   lazyInit('[data-widget="tudf"]', () => import('./widgets/tudf-slider.js').then((m) => m.initTudfSlider), '400px');
   lazyInit('[data-widget="flow"]', () => import('./widgets/flow-scrubber.js').then((m) => m.initFlowScrubber), '400px');
-  lazyInit('#problem', () => import('./scrolly.js').then((m) => () => m.initAllScrolly()), '120%');
+  lazyInit('#problem', () => import('./anim-player.js').then((m) => () => m.initAnimations()), '120%');
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

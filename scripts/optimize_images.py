@@ -39,12 +39,28 @@ def build_figures(quality):
             print(f"{out.relative_to(ROOT)}  {out.stat().st_size // 1024} KB")
 
 
+def build_logo(quality):
+    """Hero/brand logo plus the 2x affiliation chips (displayed at 26-28 CSS px)."""
+    for name, src_path in (("umass", FIG / "icons" / "umass_logo.png"), ("tucrete", FIG / "icons" / "tu_crete.png")):
+        im = Image.open(src_path).convert("RGBA")
+        im = im.resize((round(im.width * 52 / im.height), 52), Image.LANCZOS)
+        out = OUT / f"{name}-52.webp"
+        im.save(out, "WEBP", quality=90, method=6)
+        print(f"{out.relative_to(ROOT)}  {out.stat().st_size // 1024} KB")
+    src = Image.open(ROOT / "figures" / "logo" / "volfill_logo.png").convert("RGBA")
+    for w in (56, 420, 840):
+        out = OUT / f"logo-{w}.webp"
+        resize_to(src, w).save(out, "WEBP", quality=quality, method=6)
+        print(f"{out.relative_to(ROOT)}  {out.stat().st_size // 1024} KB")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quality", type=int, default=82)
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     build_figures(args.quality)
+    build_logo(args.quality)
 
 
 if __name__ == "__main__":

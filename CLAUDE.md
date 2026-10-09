@@ -6,7 +6,7 @@ Guidance for Claude Code when working on this branch.
 
 This branch is the **static project website** for VolFill (NeurIPS 2026). There is no PyTorch, no `volfill` package and no training code here. The model code is on the `main` branch of the same repo (and the full dev code in the private `VolFill_private` repo). GitHub Pages serves this branch as-is (`.nojekyll` disables Jekyll).
 
-No build step, bundler or package manager: plain HTML, CSS (`@layer`), and vanilla ES modules. Serve locally with `python -m http.server 8000`.
+No build step, bundler or package manager: plain HTML, CSS (`@layer`), and vanilla ES modules. Serve locally with `python scripts/serve.py` (port 8000). Plain `python -m http.server` ignores HTTP Range requests, so the animation videos can't seek there; GitHub Pages handles ranges.
 
 ## File map
 
@@ -14,16 +14,20 @@ No build step, bundler or package manager: plain HTML, CSS (`@layer`), and vanil
 index.html                  semantic sections, no inline styles; KaTeX (CDN + SRI) renders $...$ math
 css/tokens.css              palette (dark default, [data-theme=light]), type scale, spacing, @font-face
 css/base.css                reset + base + utilities (wrap-read 720px, wrap-wide 1200px, .reveal)
-css/components.css          everything else (topbar, hero, stage/viewers, scrolly, widgets, tables, chart, lightbox)
+css/components.css          above-the-fold components (buttons, topbar, hero, stage/viewers, stats); render-blocking
+css/sections.css            everything below the fold (chapters, animation figures, widgets, compare, tables, chart,
+                            lightbox); loaded async via rel=preload so first paint isn't blocked
 js/main.js                  boot: theme, KaTeX, scroll-spy + progress, reveals, tabs, lightbox, BibTeX copy,
                             and lazy imports (IntersectionObserver) of the modules below
 js/theme.js                 data-theme on <html>, persisted in localStorage('volfill-theme'); fires 'themechange'
                             (an inline <head> script applies the stored theme before first paint)
 js/viewers/model-viewer.js  loads <model-viewer> 4.0.0 from CDN with SRI; carousel, loading bar, fullscreen helpers
-js/viewers/teaser.js        hero viewer: ours.glb for models/valid_samples_teaser.txt
+js/viewers/teaser.js        hero viewer: ours.glb for models/valid_samples_teaser.txt. Shows media/teaser-poster.webp
+                            first; loads <model-viewer> on idle (desktop) or on tap of "Explore in 3D" (<=720px)
 js/viewers/compare.js       baseline-vs-ours viewer with camera sync; holds the BASELINES array
 js/chart.js                 SVG bar chart (occluded APD / complete FS); numbers inline, mirror Tables 1-2
-js/scrolly.js               scroll-driven Manim videos; reads media/anim/manifest.json (step start times)
+js/anim-player.js           inline Manim videos: loop while >=50% visible, pause off-screen; beat chips under
+                            each clip highlight the current beat and seek to it (marks from media/anim/manifest.json)
 js/widgets/tudf-slider.js   W1: tau/eps slider over media/widgets/tudf-slice.{png,json}
 js/widgets/flow-scrubber.js W2: t-slider over media/widgets/flow/<scene>/step_XX.webp (real Euler steps)
 fonts/                      self-hosted WOFF2: Inter, Newsreader (+italic), JetBrains Mono
@@ -33,6 +37,7 @@ media/anim/                 s1..s5 x {dark,light} x {webm,mp4,jpg poster} + mani
 media/widgets/              widget data (scripts/export_widget_data.py)
 animations/                 Manim sources (not loaded by the page): palette.py, common.py, scenes/*.py, render.sh
 scripts/screenshot.py       Playwright verification harness (screenshots + smoke checks)
+scripts/serve.py            local preview server with HTTP Range support (also used by the harness)
 ```
 
 ## Asset contract (drives both viewers)
@@ -62,7 +67,7 @@ bash animations/render.sh                 # all scenes, both themes, 1080p30, en
 bash animations/render.sh S2TUDF          # one scene
 QUALITY=-ql bash animations/render.sh     # quick preview
 ```
-Each scene calls `self.mark()` at the start of every scroll step. The number of marks must equal the number of `.step` items in the matching `[data-scrolly="sN"]` block of `index.html`, and `data-t` indexes into those marks. Colours come from `animations/palette.py`, which mirrors `css/tokens.css`; keep them in sync. Clips are encoded with a 15-frame GOP so seeking stays responsive. Keep each clip ≤ ~3 MB.
+Each scene calls `self.mark()` at the start of every beat. The number of marks must equal the number of `.beats button` chips in the matching `[data-anim-fig="sN"]` figure of `index.html` (chip i seeks to mark i). Colours come from `animations/palette.py`, which mirrors `css/tokens.css`; keep them in sync. Clips are encoded with a 15-frame GOP so seeking stays responsive. Keep each clip ≤ ~3 MB.
 
 **Widget data:**
 ```bash
@@ -86,5 +91,7 @@ It checks for console errors, asset 404s, viewer loads and swaps, camera sync, t
 
 - Pre-release metadata: BibTeX is an `@inproceedings` NeurIPS 2026 entry that keeps arXiv 2605.31466; update it when proceedings metadata exists.
 - `media/og-image.jpg` (1200×630) is the social preview referenced by the OG/Twitter tags.
-- The scrolly is desktop-only (≥961px). Below that, each clip autoplays in a loop above its text. Under `prefers-reduced-motion` the clips show native controls and nothing autoplays.
+- Under `prefers-reduced-motion` the clips show native controls and nothing autoplays.
+- `media/teaser-poster.webp` is rendered from the first teaser GLB: `python scripts/export_widget_data.py poster --glb models/$(head -1 models/valid_samples_teaser.txt)/ours.glb`. Regenerate it if you reorder the teaser list.
+- Lighthouse (local, `scripts/serve.py`): mobile 90 / 100 / 100 / 100, desktop 100 across the board. The 3D-viewer script is ~1 MB, so keep it lazy.
 - `scripts/build_glb_assets.py` and `scripts/render_orbits.py` are older and dormant. The supplementary-video section is not on the page (`videos/video_supp.mp4` is still committed).

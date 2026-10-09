@@ -13,15 +13,15 @@ Exits non-zero if any check fails. Needs `pip install playwright && playwright i
 """
 import argparse
 import asyncio
-import functools
-import http.server
 import json
-import socketserver
 import sys
 import threading
 from pathlib import Path
 
 from playwright.async_api import async_playwright
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from serve import make_server  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SIZES = {"desktop": (1440, 900, 1), "tablet": (1024, 768, 1), "mobile": (390, 844, 2)}
@@ -30,16 +30,8 @@ SECTIONS = ["top", "problem", "tudf", "vae", "flow", "conditioning", "results",
 ASSET_TYPES = {"image", "media", "font", "stylesheet", "script"}
 
 
-class QuietHandler(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
-
-
 def serve(port):
-    handler = functools.partial(QuietHandler, directory=str(ROOT))
-    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", port), handler)
-    httpd.daemon_threads = True
-    httpd.allow_reuse_address = True
+    httpd = make_server(port, quiet=True)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
@@ -89,6 +81,9 @@ async def wait_mv_loaded(page, sel, timeout=45000):
 async def functional_checks(page, rep, size):
     # Teaser viewer
     await page.locator("[data-teaser]").scroll_into_view_if_needed()
+    cta = page.locator("[data-load-3d]")
+    if await cta.is_visible():
+        await cta.click()
     rep.check("teaser loads GLB", await wait_mv_loaded(page, "#teaser-viewer"),
               await mv_src(page, "#teaser-viewer") or "")
     thumbs = page.locator("[data-teaser] .thumb")
@@ -129,19 +124,21 @@ async def functional_checks(page, rep, size):
         orbit1 = await page.evaluate("document.querySelector('#viewer-right').getCameraOrbit().theta")
         rep.check("camera sync propagates", abs(orbit1 - orbit0) > 1e-3, f"theta {orbit0:.3f} -> {orbit1:.3f}")
 
-    # Scrollytelling
-    videos = await page.evaluate("[...document.querySelectorAll('video.anim')].filter(v => v.currentSrc || v.querySelector('source')).length")
-    if videos:
-        step = page.locator("[data-scrolly='s1'] .step").nth(2)
-        await page.locator("[data-scrolly='s1']").scroll_into_view_if_needed()
+    # Inline animations
+    fig = page.locator("[data-anim-fig='s1']")
+    if await fig.count():
+        await fig.scroll_into_view_if_needed()
+        await page.wait_for_timeout(3000)
+        t = await page.evaluate("document.querySelector('[data-anim-fig=s1] video').currentTime")
+        rep.check("animation plays inline", t > 0.3, f"currentTime={t:.2f}")
+        await fig.locator(".beats button").nth(3).click()
         await page.wait_for_timeout(600)
-        await step.scroll_into_view_if_needed()
-        await page.evaluate("window.scrollBy(0, -window.innerHeight * 0.25)")
-        await page.wait_for_timeout(2500)
-        t = await page.evaluate("document.querySelector('video[data-anim=s1]').currentTime")
-        rep.check("scrolly advances video time", t > 0.2, f"currentTime={t:.2f}")
+        mark = json.loads((ROOT / "media/anim/manifest.json").read_text())["s1"]["marks"][3]
+        t = await page.evaluate("document.querySelector('[data-anim-fig=s1] video').currentTime")
+        pressed = await fig.locator(".beats button").nth(3).get_attribute("aria-pressed")
+        rep.check("beat chip seeks", t >= mark - 0.05 and pressed == "true", f"t={t:.2f} mark={mark} pressed={pressed}")
     else:
-        rep.skip("scrolly advances video time", "no animation sources yet")
+        rep.skip("animation plays inline", "no animation figures")
 
     # Widgets
     for wid in ("tudf", "flow"):
