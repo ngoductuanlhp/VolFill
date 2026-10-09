@@ -83,7 +83,7 @@ W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evalu
 python scripts/screenshot.py --out /tmp/volfill_shots/check --sections        # desktop/tablet/mobile x dark/light
 python scripts/screenshot.py --out /tmp/shots --gl swiftshader                # headless Linux (AWS) without a GPU
 ```
-It checks for console errors, asset 404s, viewer loads and swaps, camera sync, theme persistence, scrolly video time and widget response, and exits non-zero on failure.
+It checks for console errors, asset 404s, viewer loads and swaps, camera sync, theme persistence, inline animation playback and beat-chip seeking, and widget response, and exits non-zero on failure.
 
 **Deploy:** commit to `gh-pages` and `git push origin gh-pages`; GitHub Pages redeploys automatically.
 
