@@ -1,106 +1,90 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working on this branch.
 
 ## Orientation: this is `gh-pages`, not the model code
 
-Despite the path being `neurips2026_sub/VolFill/`, the checked-out branch is **`gh-pages`** — a static project website, not the training/inference codebase. There is no PyTorch, no `volfill` package, no training entry points here. The model code lives on the **`main`** branch of the same repository (under its own `volfill` conda env, per the parent `../CLAUDE.md`).
+This branch is the **static project website** for VolFill (NeurIPS 2026). There is no PyTorch, no `volfill` package and no training code here. The model code is on the `main` branch of the same repo (and the full dev code in the private `VolFill_private` repo). GitHub Pages serves this branch as-is (`.nojekyll` disables Jekyll).
 
-Do not look here for: model architecture, training scripts, dataset loaders, evaluation entry points. Switch to `main` first (`git checkout main`) — but be aware that this working tree is committed to `gh-pages`, so changes will collide.
+No build step, bundler or package manager: plain HTML, CSS (`@layer`), and vanilla ES modules. Serve locally with `python -m http.server 8000`.
 
-The parent `../CLAUDE.md` describes the multi-project workspace; this file covers only the website.
-
-## What's on this branch
-
-A static GitHub-Pages site for the VolFill paper. No build step, no bundler, no package manager — `index.html` is served as-is, with two vanilla-JS modules and a CSS file. GitHub Pages auto-deploys whatever lands on `gh-pages` (`.nojekyll` disables Jekyll processing). Serve locally with `python -m http.server 8000`.
-
-Page structure (single-file):
-- `index.html` — hero / abstract / method / qualitative viewer / quantitative tables / ablations / limitations / bibtex / references. Tables, method text, and the references list are inline HTML; the two viewers are JS-driven. The references `<ol class="references">` (numbered `[n]` via a CSS counter, baselines + eval datasets) lives inside the `#bibtex` section after the `<pre>`.
-- `css/style.css` — all page styles, including the `viewer-*` classes that the JS depends on for thumb wiring.
-- `js/teaser-viewer.js` — drives the single `<model-viewer id="teaser-viewer">` at the top.
-- `js/viewer-swap.js` — drives the side-by-side baseline-vs-ours comparison in the Qualitative Results section, with bidirectional camera sync.
-- `js/gallery.js` — orphan video-gallery script not wired into the current `index.html` (kept for potential future use).
-
-Both JS files are wrapped in IIFEs so their top-level `SCENES` / `MODELS_ROOT` consts don't collide.
-
-3D rendering uses Google's `<model-viewer>` web component loaded from CDN (`ajax.googleapis.com/.../model-viewer@4.0.0`). It expects GLB files (binary glTF) at the URL given by the `src` attribute.
-
-## Asset layout — the contract that drives the viewers
-
-Each scene is a folder under `models/<sample_id>/`. Required files:
+## File map
 
 ```
-models/<sample_id>/
-  input.jpg          # input RGB shown beside the viewers
-  ours.glb           # VolFill prediction (point cloud as GLB)
-  moge2.glb          # one .glb per baseline listed in BASELINES (see js/viewer-swap.js)
-  da3.glb
-  nova3r.glb
-  lari.glb
+index.html                  semantic sections, no inline styles; KaTeX (CDN + SRI) renders $...$ math
+css/tokens.css              palette (dark default, [data-theme=light]), type scale, spacing, @font-face
+css/base.css                reset + base + utilities (wrap-read 720px, wrap-wide 1200px, .reveal)
+css/components.css          everything else (topbar, hero, stage/viewers, scrolly, widgets, tables, chart, lightbox)
+js/main.js                  boot: theme, KaTeX, scroll-spy + progress, reveals, tabs, lightbox, BibTeX copy,
+                            and lazy imports (IntersectionObserver) of the modules below
+js/theme.js                 data-theme on <html>, persisted in localStorage('volfill-theme'); fires 'themechange'
+                            (an inline <head> script applies the stored theme before first paint)
+js/viewers/model-viewer.js  loads <model-viewer> 4.0.0 from CDN with SRI; carousel, loading bar, fullscreen helpers
+js/viewers/teaser.js        hero viewer: ours.glb for models/valid_samples_teaser.txt
+js/viewers/compare.js       baseline-vs-ours viewer with camera sync; holds the BASELINES array
+js/chart.js                 SVG bar chart (occluded APD / complete FS); numbers inline, mirror Tables 1-2
+js/scrolly.js               scroll-driven Manim videos; reads media/anim/manifest.json (step start times)
+js/widgets/tudf-slider.js   W1: tau/eps slider over media/widgets/tudf-slice.{png,json}
+js/widgets/flow-scrubber.js W2: t-slider over media/widgets/flow/<scene>/step_XX.webp (real Euler steps)
+fonts/                      self-hosted WOFF2: Inter, Newsreader (+italic), JetBrains Mono
+figures/opt/                WebP figures at 800/1600/2400 (scripts/optimize_images.py); originals stay in figures/
+figures/logo/               Blender/Cycles logo + favicons (scripts/logo/)
+media/anim/                 s1..s5 x {dark,light} x {webm,mp4,jpg poster} + manifest.json
+media/widgets/              widget data (scripts/export_widget_data.py)
+animations/                 Manim sources (not loaded by the page): palette.py, common.py, scenes/*.py, render.sh
+scripts/screenshot.py       Playwright verification harness (screenshots + smoke checks)
 ```
 
-The `<method>.glb` stem MUST match the `variant` field in the `BASELINES` array in `js/viewer-swap.js` — that's how the viewer maps a clicked thumb to a file path.
+## Asset contract (drives both viewers)
 
-Two manifests govern which scenes the page shows:
+```
+models/<sample_id>/input.jpg  ours.glb  moge2.glb  da3.glb  nova3r.glb  lari.glb
+```
 
-- `models/valid_samples_teaser.txt` — **hand-curated** ordered list for the top teaser viewer. Edit directly.
-- `models/valid_samples.txt` — **auto-generated** by `scripts/validate_samples.py`. Contains only samples that have every required `.glb` plus `input.jpg`. Do not hand-edit; regenerate.
+- `<method>.glb` stems MUST match the `variant` fields of `BASELINES` in `js/viewers/compare.js`.
+- `models/valid_samples_teaser.txt` is **hand-curated** (teaser order). `models/valid_samples.txt` is **auto-generated** by `scripts/validate_samples.py`; never hand-edit it. The comparison viewer's first scene is the first line of `valid_samples.txt`.
+- **Baseline rename = three places:** `BASELINES` in `js/viewers/compare.js`, the `--methods` passed to `validate_samples.py`, and `METHOD_DIRS` in `build_quali_glbs.py`. `group` only affects UI grouping (Pixel-aligned / Amodal).
+- `.glb` files are committed (`models/` is ~740 MB). `<model-viewer>` uses `loading="lazy"` and the viewers initialise only near the viewport.
 
-`models/valid_samples_all.txt` is a snapshot of all candidates (informational; not consumed by JS).
+## Workflows
 
-## Workflow: adding new qualitative scenes
-
-This is the most common task. The pipeline goes inference-outputs → GLB → validation:
-
-1. **Convert raw inference outputs to web GLBs** (run from inside the `volfill` conda env on `main`, since it uses `open3d` and `trimesh`):
-   ```bash
-   python scripts/build_quali_glbs.py \
-     --quali_root ../VolFill/results/quali_results \
-     --out_dir models/
-   ```
-   This reads from `VolFill/results/quali_results/<method_dir>/<dataset>/<scene>/<frame>/` (one subdir per method — see the `METHOD_DIRS` mapping at the top of the script) and writes `models/<dataset>_<scene>_<frame>/<method>.glb` + `input.jpg`.
-
-2. **Refresh the validated list:**
-   ```bash
-   python scripts/validate_samples.py --methods ours moge2 da3 nova3r lari
-   ```
-   This regenerates `models/valid_samples.txt`. The `--methods` list must match (or be a subset of) the `BASELINES` `variant` values in `js/viewer-swap.js`, otherwise the JS will request a `.glb` that doesn't exist and the viewer will silently 404.
-
-3. **(Optional) Update the teaser list** in `models/valid_samples_teaser.txt` to highlight the best new scenes at the top of the page.
-
-`scripts/build_glb_assets.py` is an older/simpler converter that takes a JSON manifest of source paths instead of scanning a results tree. `build_quali_glbs.py` is the one actively used; only fall back to `build_glb_assets.py` for one-off scenes outside the standard results layout.
-
-`scripts/render_orbits.py` renders 360° orbit MP4s into `videos/orbit_<id>.mp4`. The current `index.html` doesn't embed orbit videos (the supplementary video section is commented out), so this script is dormant.
-
-## Non-obvious things to know
-
-- **Coordinate flip in `build_quali_glbs.py`.** `_normalize_and_orient()` (lines ~146–159) negates both Y *and* Z to convert from OpenCV (Y-down, Z-into-scene) to GLTF (Y-up, Z-toward-viewer). Flipping only one axis produces a left-handed reflection and the viewer renders a mirrored scene. If a new sample appears flipped or upside-down, this is where to look.
-- **Baseline rename = three places.** Adding/removing/renaming a baseline requires editing all three: the `BASELINES` array in `js/viewer-swap.js`, the `--methods` arg passed to `validate_samples.py`, and the `METHOD_DIRS` mapping in `build_quali_glbs.py`. The page will silently break if any pair drifts apart. Each `BASELINES` entry also has a `group` field (currently `Pixel-aligned` for `moge2`/`da3`, `Amodal` for `nova3r`/`lari`) that only controls how the method thumbs are stacked/labelled in the second thumb row — it doesn't affect file paths.
-- **Default sample IDs in `index.html` are hardcoded** in two places — the `src` of `<model-viewer id="teaser-viewer">` (currently `models/scrream_scene10_full_00_001005/ours.glb`) and the `<model-viewer id="viewer-right">` / `<model-viewer id="viewer-left">` pair (currently `models/scrream_scene01_full_00_000055/{nova3r,ours}.glb`) — as the initial scene shown before the JS swaps in the first thumb. If you delete those specific sample dirs, the page will 404 on first paint (the JS recovers when the user clicks a thumb, but it looks broken on load). Either keep the referenced dirs or update both `src` attributes. Note the side-by-side default `scrream_scene01_full_00_000055` exists on disk but is **not** in `valid_samples.txt` (that list has `..._000285`), so it is shown only as the first-paint default and is never reachable via a thumb — the thumbs come exclusively from `valid_samples.txt`.
-- **`.glb` files are committed to the repo.** `models/*/*.glb` is tracked, and `models/` is the bulk of the branch's size. `.gitignore` has commented-out entries for hosting them externally — uncomment only if you switch to LFS or external hosting.
-- **Pre-release links/IDs in `index.html` are not final.** The arXiv button now points to a concrete ID (`href="https://arxiv.org/abs/2605.31466"`) but it is a placeholder — the BibTeX block still carries a `TODO: replace once arXiv ID is assigned` and an unverified `@article{ngo2026volfill, ...}` year/journal. The Code button still points to `https://github.com/ngoductuanlhp/VolFill`. Treat arXiv ID, BibTeX, and Code URL as all needing a final pass before public release; don't assume the live arXiv link is real just because it isn't `#`. (The author/affiliation block is now finalized — real authors, with institution logos from `figures/icons/` — so the old author-list `TODO` has been removed.)
-
-## Common commands
-
+**Add qualitative scenes** (run in the `volfill` env, which has open3d/trimesh):
 ```bash
-# Serve the site locally
-python -m http.server 8000   # then open http://localhost:8000
-
-# Regenerate valid_samples.txt after adding new sample dirs or editing BASELINES
+python scripts/build_quali_glbs.py --quali_root ../VolFill/results/quali_results --out_dir models/
 python scripts/validate_samples.py --methods ours moge2 da3 nova3r lari
-
-# Convert a fresh batch of inference outputs into web GLBs
-python scripts/build_quali_glbs.py \
-  --quali_root ../VolFill/results/quali_results \
-  --out_dir models/
-
-# Dry-run discovery (lists samples that would be converted)
-python scripts/build_quali_glbs.py --dry_run
-
-# Deploy: commit and push to gh-pages
-git add models/ index.html  # or whatever changed
-git commit -m "..."
-git push origin gh-pages    # GitHub Pages picks up automatically
+# optionally edit models/valid_samples_teaser.txt
 ```
+`build_quali_glbs.py` negates Y *and* Z (OpenCV -> glTF); flipping only one mirrors the scene.
 
-There is no linter, no test suite, no CI on this branch.
+**Re-render the animations** (needs manim, ffmpeg with libvpx-vp9/libx264, and LaTeX with dvisvgm; TinyTeX works):
+```bash
+bash animations/render.sh                 # all scenes, both themes, 1080p30, encode + manifest
+bash animations/render.sh S2TUDF          # one scene
+QUALITY=-ql bash animations/render.sh     # quick preview
+```
+Each scene calls `self.mark()` at the start of every scroll step. The number of marks must equal the number of `.step` items in the matching `[data-scrolly="sN"]` block of `index.html`, and `data-t` indexes into those marks. Colours come from `animations/palette.py`, which mirrors `css/tokens.css`; keep them in sync. Clips are encoded with a 15-frame GOP so seeking stays responsive. Keep each clip ≤ ~3 MB.
+
+**Widget data:**
+```bash
+python scripts/export_widget_data.py tudf --glb models/scrream_scene09_full_00_000275/ours.glb      # W1 (also feeds S1/S2/S3/S4/S5)
+python scripts/export_widget_data.py flow --traj_dir <run>/out/<scene>/<frame> --name scene09        # W2, per scene
+```
+W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evaluation.eval_latent_flow_visible --mode inference_all_steps ...` (see `scripts/infer/infer_traj_webpage.sbatch` there). It writes `step_XXX/pred_tudf_256.npz` per Euler step. List the exported scenes in `media/widgets/flow/index.json`. The code integrates t from 1 → 0; the page shows the paper's convention (0 = noise, 1 = data).
+
+**Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. **Logo:** `scripts/logo/render_logo.py` (Blender) + `scripts/logo/make_assets.sh`.
+
+**Verify before pushing:**
+```bash
+python scripts/screenshot.py --out /tmp/volfill_shots/check --sections        # desktop/tablet/mobile x dark/light
+python scripts/screenshot.py --out /tmp/shots --gl swiftshader                # headless Linux (AWS) without a GPU
+```
+It checks for console errors, asset 404s, viewer loads and swaps, camera sync, theme persistence, scrolly video time and widget response, and exits non-zero on failure.
+
+**Deploy:** commit to `gh-pages` and `git push origin gh-pages`; GitHub Pages redeploys automatically.
+
+## Non-obvious things
+
+- Pre-release metadata: BibTeX is an `@inproceedings` NeurIPS 2026 entry that keeps arXiv 2605.31466; update it when proceedings metadata exists.
+- `media/og-image.jpg` (1200×630) is the social preview referenced by the OG/Twitter tags.
+- The scrolly is desktop-only (≥961px). Below that, each clip autoplays in a loop above its text. Under `prefers-reduced-motion` the clips show native controls and nothing autoplays.
+- `scripts/build_glb_assets.py` and `scripts/render_orbits.py` are older and dormant. The supplementary-video section is not on the page (`videos/video_supp.mp4` is still committed).

@@ -1,11 +1,9 @@
-# VolFill — Project Webpage
+# VolFill — Project Page
 
-Static GitHub-Pages-style site for the VolFill paper.
+Project page for **VolFill: Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching** (NeurIPS 2026): https://ngoductuanlhp.github.io/VolFill/
 
+A static site with no build step: HTML, CSS and vanilla ES modules. Serve it locally with `python -m http.server 8000`. See `CLAUDE.md` for the file map and the workflows for adding scenes, re-rendering animations and verifying the page.
 
 ## Credits
 
-Page template adapted from
-[TrackCraft3R](https://cvlab-kaist.github.io/TrackCraft3r/) /
-[St4RTrack](https://st4rtrack.github.io/). Interactive 3D viewer pattern
-adapted from [DAGE](https://ngoductuanlhp.github.io/dage-site/).
+The animations were made with [Manim Community](https://www.manim.community/). The interactive 3D viewers use Google's [`<model-viewer>`](https://modelviewer.dev/), and math is typeset by [KaTeX](https://katex.org/). The 3D viewer interaction pattern is adapted from [DAGE](https://ngoductuanlhp.github.io/dage-site/).

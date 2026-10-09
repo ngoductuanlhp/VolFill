@@ -1,0 +1,132 @@
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Newsreader";
+  src: url("../fonts/newsreader-var.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Newsreader";
+  src: url("../fonts/newsreader-var-italic.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains-mono-var.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1015;
+  --bg-raise: #12151C;
+  --surface: #161A22;
+  --surface-2: #1C212B;
+  --border: #262B36;
+  --border-strong: #353B48;
+  --text: #E8EAED;
+  --text-muted: #9AA3B2;
+  --text-faint: #6B7383;
+
+  --blue: #58C4DD;
+  --teal: #5CD0B3;
+  --yellow: #F7D96F;
+  --red: #FC6255;
+  --green: #83C167;
+  --purple: #9A72AC;
+  --occluded: #6E8FC4;
+
+  --accent: var(--blue);
+  --ours: var(--yellow);
+  --ours-text: var(--yellow);
+  --on-accent: #0E1015;
+  --tint-ours: rgba(247, 217, 111, 0.07);
+  --tint-blue: rgba(88, 196, 221, 0.10);
+  --stage: #0A0C10;
+  --chip: #F4F2EC;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 20px 60px -30px rgba(0, 0, 0, 0.8);
+  --grid-line: rgba(255, 255, 255, 0.035);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #FAF9F6;
+  --bg-raise: #F3F1EC;
+  --surface: #FFFFFF;
+  --surface-2: #F1EFEA;
+  --border: #E2DFD7;
+  --border-strong: #CFCBC1;
+  --text: #16181D;
+  --text-muted: #565D69;
+  --text-faint: #7D8491;
+
+  --blue: #1C758A;
+  --teal: #237A66;
+  --yellow: #B8860B;
+  --red: #C0392B;
+  --green: #3F7A26;
+  --purple: #6D4C7D;
+  --occluded: #4F6FA6;
+
+  --ours-text: #7D5C07;
+
+  --on-accent: #FFFFFF;
+  --tint-ours: rgba(184, 134, 11, 0.09);
+  --tint-blue: rgba(28, 117, 138, 0.08);
+  --stage: #EDEBE5;
+  --chip: #FFFFFF;
+  --shadow: 0 1px 2px rgba(20, 20, 30, 0.04), 0 18px 50px -30px rgba(20, 20, 30, 0.35);
+  --grid-line: rgba(0, 0, 0, 0.035);
+}
+
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1.0625rem;
+  --fs-md: 1.1875rem;
+  --fs-lg: clamp(1.35rem, 1.1rem + 0.9vw, 1.75rem);
+  --fs-xl: clamp(1.9rem, 1.4rem + 2vw, 2.9rem);
+  --fs-hero: clamp(3rem, 1.8rem + 6vw, 6.25rem);
+
+  --lh-tight: 1.12;
+  --lh-body: 1.65;
+
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4.5rem;
+  --sp-9: 7rem;
+
+  --w-read: 720px;
+  --w-wide: 1200px;
+  --gutter: clamp(1.1rem, 4vw, 2.5rem);
+  --nav-h: 56px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 220ms;
+}

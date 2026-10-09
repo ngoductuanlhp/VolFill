@@ -1,0 +1,16 @@
+{
+ "voxel_size": 0.005069851875305176,
+ "px_per_voxel": 1.0,
+ "height_frac": 0.4,
+ "camera_px": [
+  142.0710906982422,
+  92.36307525634766
+ ],
+ "source": "scrream_scene09_full_00_000275",
+ "dmax": 24.0,
+ "tau": 3,
+ "width": 258,
+ "height": 174,
+ "camera": "bottom",
+ "surface_fraction_tau3": 0.1639490332353203
+}
