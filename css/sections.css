@@ -292,6 +292,45 @@
 .lightbox[open] { animation: lb-in 260ms var(--ease); }
 @keyframes lb-in { from { opacity: 0; transform: scale(0.98); } }
 
+/* ------------------------------------------------------------ generation diagram */
+.dit-fig { margin: var(--sp-5) auto 0; max-width: 1120px; }
+.dit-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--bg-raise); padding: var(--sp-4) var(--sp-3); }
+.dit { width: 100%; min-width: 760px; height: auto; display: block; }
+.dit text { font-family: var(--font-sans); }
+.dit .d-label { font-size: 16px; font-weight: 600; fill: var(--text); }
+.dit .d-small { font-size: 13px; font-weight: 600; fill: var(--text); }
+.dit .d-sub { font-size: 14px; fill: var(--text-muted); }
+.dit .d-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; fill: var(--text-faint); }
+.dit .d-math { font-family: var(--font-serif); font-style: italic; font-size: 20px; }
+.dit .d-sub.d-math, .dit .d-sub .d-math { font-size: 16px; }
+.dit .d-subs { font-size: 11px; font-style: normal; }
+.dit .d-box { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.5; }
+.dit .d-group { fill: color-mix(in srgb, var(--surface-2) 60%, transparent); stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.dit .d-frame { fill: none; stroke: var(--border-strong); stroke-width: 1.5; }
+.dit .d-line { fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dit .d-head { fill: var(--text-muted); }
+.dit .d-blue { stroke: var(--blue); }
+.dit .d-head-blue { fill: var(--blue); }
+.dit .d-green { stroke: var(--green); }
+.dit .d-head-green { fill: var(--green); }
+.dit .d-blue-text { fill: var(--blue); }
+.dit .d-green-text { fill: var(--green); }
+.dit .d-ours-text { fill: var(--ours-text); font-weight: 600; }
+.dit .d-tokens rect { fill: var(--blue); }
+.dit .d-latent rect { fill: var(--green); }
+.dit .d-plus { fill: var(--surface); stroke: var(--text-muted); stroke-width: 2; }
+.dit .d-badge { fill: var(--surface); stroke-width: 1.5; }
+.dit .d-badge-blue { stroke: var(--blue); }
+.dit .d-badge-green { stroke: var(--green); }
+.dit .d-badge-text { font-size: 12px; font-weight: 700; fill: var(--text); }
+.dit .p-tokens, .dit .p-visible { transition: opacity var(--dur) var(--ease); }
+#generation:has(.cond-list li[data-path="tokens"]:hover) .dit .p-visible,
+#generation:has(.cond-list li[data-path="visible"]:hover) .dit .p-tokens { opacity: 0.18; }
+.cond-list li[data-path] { cursor: default; border-radius: var(--r-sm); }
+.badge-green { color: var(--green); }
+.hl-green { color: var(--green); font-weight: 500; }
+.link-btn { color: var(--blue); font-size: inherit; text-decoration: underline; text-underline-offset: 0.18em; }
+
 /* ------------------------------------------------------------ responsive */
 @media (max-width: 960px) {
   .tudf-grid, .flow-grid { grid-template-columns: 1fr; gap: var(--sp-5); }

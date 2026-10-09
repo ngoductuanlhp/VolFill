@@ -283,18 +283,108 @@
     <h2 id="gen-title">Generate the latent from a single image</h2>
     <p class="lede">A diffusion transformer, trained with <strong>flow matching</strong>, generates the VAE latent from noise in 50 steps. The VAE decoder then turns that latent into the TUDF grid. The transformer is conditioned on the input image in two ways:</p>
     <ul class="cond-list">
-      <li><span class="badge-num">1</span><span><strong>Global geometric prior.</strong> Frozen MoGe-2 features enter every transformer block through <span class="hl-blue">cross-attention</span>, giving the overall layout and scale.</span></li>
-      <li><span class="badge-num">2</span><span><strong>Visible-latent inpainting.</strong> MoGe-2's visible point map is converted to a TUDF, encoded by the frozen VAE encoder into $z_{\text{vis}}$, and <span class="hl-teal">added</span> to the noisy latent through a zero-initialized layer: $\tilde z_t = z_t + \mathrm{MLP}_{\text{zero}}(z_{\text{vis}})$. This anchors the result to what the camera actually saw.</span></li>
+      <li data-path="tokens"><span class="badge-num">1</span><span><strong>Global geometric prior.</strong> Frozen MoGe-2 features enter every transformer block through <span class="hl-blue">cross-attention</span>, giving the overall layout and scale.</span></li>
+      <li data-path="visible"><span class="badge-num badge-green">2</span><span><strong>Visible-latent inpainting.</strong> MoGe-2's visible point map is converted to a TUDF, encoded by the frozen VAE encoder into $z_{\text{vis}}$, and <span class="hl-green">added</span> to the noisy latent through a zero-initialized layer: $\tilde z_t = z_t + \mathrm{MLP}_{\text{zero}}(z_{\text{vis}})$. This anchors the result to what the camera actually saw.</span></li>
     </ul>
   </header>
   <div class="wrap-wide">
-    <figure class="paper-fig paper-fig-mid">
-      <button class="fig-btn" type="button" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent diffusion transformer with dual conditioning (paper figure).">
-        <img src="figures/opt/architecture_dit-1600.webp" srcset="figures/opt/architecture_dit-800.webp 800w, figures/opt/architecture_dit-1600.webp 1162w"
-             sizes="(max-width: 1000px) 100vw, 960px" width="1162" height="442" loading="lazy" decoding="async"
-             alt="Latent diffusion transformer conditioned on MoGe-2 image tokens via cross-attention and on the visible-geometry latent via addition">
-      </button>
-      <figcaption class="caption">Training data: 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples).</figcaption>
+    <figure class="dit-fig" aria-labelledby="dit-cap">
+      <div class="dit-scroll">
+        <svg class="dit" viewBox="0 0 1120 380" role="img" aria-labelledby="dit-title dit-desc">
+          <title id="dit-title">VolFill generation pipeline</title>
+          <desc id="dit-desc">The input image goes to a frozen MoGe-2. Path 1: its image tokens enter every block of the denoising transformer through cross-attention. Path 2: its visible geometry is converted to a TUDF, encoded by the frozen VAE encoder into a visible latent, passed through a zero-initialised MLP and added to the noisy latent. The transformer runs for 50 steps; the VAE decoder turns the final latent into the amodal 3D output.</desc>
+          <defs>
+            <marker id="dit-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" class="d-head"/>
+            </marker>
+            <marker id="dit-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" class="d-head-blue"/>
+            </marker>
+            <marker id="dit-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" class="d-head-green"/>
+            </marker>
+            <clipPath id="dit-clip-in"><rect x="20" y="52" width="140" height="110" rx="10"/></clipPath>
+          </defs>
+
+          <!-- input -->
+          <image href="models/scrream_scene09_full_00_000275/input.jpg" x="20" y="52" width="140" height="110" preserveAspectRatio="xMidYMid slice" clip-path="url(#dit-clip-in)"/>
+          <rect x="20" y="52" width="140" height="110" rx="10" class="d-frame"/>
+          <text x="90" y="186" class="d-sub" text-anchor="middle">input image</text>
+
+          <!-- MoGe-2 -->
+          <path d="M160 107 H196" class="d-line" marker-end="url(#dit-arrow)"/>
+          <rect x="200" y="79" width="130" height="56" rx="12" class="d-box"/>
+          <text x="265" y="112" class="d-label" text-anchor="middle">MoGe-2</text>
+          <text x="265" y="153" class="d-tag" text-anchor="middle">frozen</text>
+
+          <!-- path 1: image tokens -> cross-attention -->
+          <g class="p-tokens">
+            <path d="M330 107 H372" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <g class="d-tokens">
+              <rect x="378" y="96" width="20" height="22" rx="4"/><rect x="402" y="96" width="20" height="22" rx="4"/>
+              <rect x="426" y="96" width="20" height="22" rx="4"/><rect x="450" y="96" width="20" height="22" rx="4"/>
+            </g>
+            <text x="424" y="84" class="d-sub d-blue-text" text-anchor="middle">image tokens</text>
+            <path d="M470 107 H510 V64 H740" class="d-line d-blue"/>
+            <path d="M610 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M690 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M780 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M740 64 H780" class="d-line d-blue"/>
+            <text x="560" y="54" class="d-tag d-blue-text">cross-attention</text>
+            <circle cx="510" cy="134" r="11" class="d-badge d-badge-blue"/><text x="510" y="138.5" class="d-badge-text" text-anchor="middle">1</text>
+          </g>
+
+          <!-- denoising transformer -->
+          <rect x="560" y="76" width="270" height="116" rx="16" class="d-group"/>
+          <rect x="576" y="90" width="68" height="62" rx="10" class="d-box"/>
+          <text x="610" y="118" class="d-small" text-anchor="middle">DiT</text><text x="610" y="134" class="d-small" text-anchor="middle">block</text>
+          <rect x="656" y="90" width="68" height="62" rx="10" class="d-box"/>
+          <text x="690" y="118" class="d-small" text-anchor="middle">DiT</text><text x="690" y="134" class="d-small" text-anchor="middle">block</text>
+          <text x="735" y="125" class="d-sub" text-anchor="middle">···</text>
+          <rect x="746" y="90" width="68" height="62" rx="10" class="d-box"/>
+          <text x="780" y="118" class="d-small" text-anchor="middle">DiT</text><text x="780" y="134" class="d-small" text-anchor="middle">block</text>
+          <text x="695" y="178" class="d-sub" text-anchor="middle">denoising transformer <tspan class="d-math">Φ</tspan></text>
+          <text x="826" y="212" class="d-tag" text-anchor="end">× 50 steps</text>
+
+          <!-- path 2: visible geometry -> z_vis -> MLP_0 -> + -->
+          <g class="p-visible">
+            <path d="M265 135 V256" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <rect x="200" y="262" width="130" height="56" rx="12" class="d-box"/>
+            <text x="265" y="286" class="d-label" text-anchor="middle">visible</text>
+            <text x="265" y="306" class="d-label" text-anchor="middle">TUDF</text>
+            <path d="M330 290 H366" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <rect x="370" y="262" width="92" height="56" rx="12" class="d-box"/>
+            <text x="416" y="296" class="d-label" text-anchor="middle">Encoder</text>
+            <text x="416" y="336" class="d-tag" text-anchor="middle">frozen</text>
+            <path d="M462 290 H492" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <g class="d-latent">
+              <rect x="497" y="272" width="11" height="11" rx="2"/><rect x="511" y="272" width="11" height="11" rx="2"/><rect x="525" y="272" width="11" height="11" rx="2"/>
+              <rect x="497" y="286" width="11" height="11" rx="2"/><rect x="511" y="286" width="11" height="11" rx="2"/><rect x="525" y="286" width="11" height="11" rx="2"/>
+              <rect x="497" y="300" width="11" height="11" rx="2"/><rect x="511" y="300" width="11" height="11" rx="2"/><rect x="525" y="300" width="11" height="11" rx="2"/>
+            </g>
+            <text x="517" y="336" class="d-sub d-green-text d-math" text-anchor="middle">z<tspan class="d-subs" dy="4">vis</tspan></text>
+            <path d="M536 290 H578" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <rect x="582" y="266" width="76" height="48" rx="12" class="d-box"/>
+            <text x="620" y="295" class="d-label" text-anchor="middle">MLP<tspan class="d-subs" dy="4">0</tspan></text>
+            <path d="M658 290 H676" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <circle cx="510" cy="232" r="11" class="d-badge d-badge-green"/><text x="510" y="236.5" class="d-badge-text" text-anchor="middle">2</text>
+          </g>
+          <circle cx="695" cy="290" r="15" class="d-plus"/>
+          <path d="M687 290 H703 M695 282 V298" class="d-line"/>
+          <path d="M695 275 V196" class="d-line" marker-end="url(#dit-arrow)"/>
+          <path d="M790 290 H714" class="d-line" marker-end="url(#dit-arrow)"/>
+          <text x="800" y="286" class="d-sub">noisy latent <tspan class="d-math">z</tspan><tspan class="d-subs d-math" dy="4">t</tspan></text>
+
+          <!-- decode -->
+          <path d="M830 134 H884" class="d-line" marker-end="url(#dit-arrow)"/>
+          <rect x="888" y="106" width="92" height="56" rx="12" class="d-box"/>
+          <text x="934" y="140" class="d-label" text-anchor="middle">Decoder</text>
+          <path d="M980 134 H1010 V196" class="d-line" marker-end="url(#dit-arrow)"/>
+          <image href="media/widgets/flow/scene09/step_49.webp" x="945" y="200" width="150" height="112" preserveAspectRatio="xMidYMid meet"/>
+          <text x="1020" y="336" class="d-sub d-ours-text" text-anchor="middle">amodal 3D output</text>
+        </svg>
+      </div>
+      <figcaption id="dit-cap" class="caption">Trained on 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples). <button type="button" class="link-btn" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent DiT with dual conditioning (paper figure).">Paper figure</button></figcaption>
     </figure>
 
     <figure class="widget" id="widget-flow" data-widget="flow">
