@@ -18,8 +18,6 @@ SCENES=(
   "s1 s1_problem S1Problem"
   "s2 s2_tudf S2TUDF"
   "s3 s3_vae S3VAE"
-  "s4 s4_flow S4Flow"
-  "s5 s5_conditioning S5Conditioning"
 )
 mkdir -p "$OUT" "$WORK"
 
@@ -46,7 +44,7 @@ done
 python3 - "$HERE/out" "$OUT/manifest.json" <<'EOF'
 import json, sys
 from pathlib import Path
-names = {"S1Problem": "s1", "S2TUDF": "s2", "S3VAE": "s3", "S4Flow": "s4", "S5Conditioning": "s5"}
+names = {"S1Problem": "s1", "S2TUDF": "s2", "S3VAE": "s3"}
 out = {}
 for cls, short in names.items():
     f = Path(sys.argv[1]) / f"{cls}.json"

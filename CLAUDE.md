@@ -33,7 +33,7 @@ js/widgets/flow-scrubber.js W2: t-slider over media/widgets/flow/<scene>/step_XX
 fonts/                      self-hosted WOFF2: Inter, Newsreader (+italic), JetBrains Mono
 figures/opt/                WebP figures at 800/1600/2400 (scripts/optimize_images.py); originals stay in figures/
 figures/logo/               Blender/Cycles logo + favicons (scripts/logo/)
-media/anim/                 s1..s5 x {dark,light} x {webm,mp4,jpg poster} + manifest.json
+media/anim/                 s1..s3 x {dark,light} x {webm,mp4,jpg poster} + manifest.json (Problem, TUDF, VAE)
 media/widgets/              widget data (scripts/export_widget_data.py)
 animations/                 Manim sources (not loaded by the page): palette.py, common.py, scenes/*.py, render.sh
 scripts/screenshot.py       Playwright verification harness (screenshots + smoke checks)
@@ -71,7 +71,7 @@ Each scene calls `self.mark()` at the start of every beat. The number of marks m
 
 **Widget data:**
 ```bash
-python scripts/export_widget_data.py tudf --glb models/scrream_scene09_full_00_000275/ours.glb      # W1 (also feeds S1/S2/S3/S4/S5)
+python scripts/export_widget_data.py tudf --glb models/scrream_scene09_full_00_000275/ours.glb      # W1 (also feeds S1-S3)
 python scripts/export_widget_data.py flow --traj_dir <run>/out/<scene>/<frame> --name scene09        # W2, per scene
 ```
 W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evaluation.eval_latent_flow_visible --mode inference_all_steps ...` (see `scripts/infer/infer_traj_webpage.sbatch` there). It writes `step_XXX/pred_tudf_256.npz` per Euler step. List the exported scenes in `media/widgets/flow/index.json`. The code integrates t from 1 → 0; the page shows the paper's convention (0 = noise, 1 = data).

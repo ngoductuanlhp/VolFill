@@ -89,8 +89,7 @@
       <a href="#problem">Problem</a>
       <a href="#tudf">TUDF</a>
       <a href="#vae">VAE</a>
-      <a href="#flow">Flow</a>
-      <a href="#conditioning">Conditioning</a>
+      <a href="#generation">Generation</a>
       <a href="#results">Results</a>
       <a href="#quantitative">Numbers</a>
       <a href="#ablations">Ablations</a>
@@ -259,47 +258,50 @@
 <section class="chapter" id="vae" aria-labelledby="vae-title">
   <header class="chapter-head wrap-read">
     <p class="chapter-num"><span>03</span>Hybrid 3D VAE</p>
-    <h2 id="vae-title">Sparse where it can be, dense where it must be</h2>
-    <p class="lede">Only 3–5% of the voxels fall in the surface band. The encoder exploits this with sparse 3D convolutions down to a dense $16^3 \times 16$ latent. The decoder can't know in advance where the surfaces are. It upsamples densely to $64^3$ (about 262K voxels), lets an occupancy head prune empty cells, then finishes at $256^3$ with sparse convolutions, so cost scales with surface area rather than volume.</p>
+    <h2 id="vae-title">Compress the grid into a small latent</h2>
+    <p class="lede">A $256^3$ grid is too large to generate directly. A 3D VAE compresses it into a compact $16^3$ latent and decodes it back. The decoder is <strong>hybrid</strong>: it upsamples densely to $64^3$, keeps only the cells near a surface, and finishes at $256^3$ with sparse convolutions. Compared with a dense-only decoder, it is about 9× faster (0.07 s vs 0.63 s) and uses about 5× less memory (1.7 GB vs 9.2 GB), with lower reconstruction error.</p>
   </header>
   <figure class="anim-fig wrap-wide" data-anim-fig="s3">
     <div class="anim-frame">
-      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: sparse encoder to a 16 cubed latent, dense upsampling, occupancy pruning, sparse upsampling"></video>
+      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: the 256 cubed TUDF is encoded to a 16 cubed latent, decoded densely to 64 cubed, pruned to surface cells, then sparsely to 256 cubed"></video>
     </div>
     <figcaption class="beats" aria-label="Jump to a step of the animation">
-      <button type="button">Sparse input</button><button type="button">Encode</button><button type="button">Dense ↑ 64³</button><button type="button">Prune</button><button type="button">Sparse ↑ 256³</button>
+      <button type="button">Encode</button><button type="button">Dense ↑ 64³</button><button type="button">Sparse ↑ 256³</button>
     </figcaption>
   </figure>
   <div class="wrap-read fig-actions">
-    <p class="fine">Trained with an L1 loss on active voxels, BCE + Dice on occupancy, and a small KL term.</p>
     <button class="btn btn-ghost" type="button" data-lightbox="figures/opt/architecture_vae-2400.webp" data-caption="Hybrid 3D VAE architecture (paper figure).">
       <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Paper figure
     </button>
   </div>
 </section>
 
-<!-- ================================================================ 04 FLOW -->
-<section class="chapter" id="flow" aria-labelledby="flow-title">
+<!-- ================================================================ 04 GENERATION -->
+<section class="chapter" id="generation" aria-labelledby="gen-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>04</span>Flow matching</p>
-    <h2 id="flow-title">Straight lines from noise to scenes</h2>
-    <p class="lede">Rectified flow joins noise $\boldsymbol{\epsilon}$ and a data latent $\mathbf{z}_1$ with a straight line, $\mathbf{z}_t = (1 - t)\,\boldsymbol{\epsilon} + t\,\mathbf{z}_1$. Its velocity is the constant $\mathbf{u}^\star = \mathbf{z}_1 - \boldsymbol{\epsilon}$, which the diffusion transformer $\Phi$ learns to regress. At inference, VolFill integrates 50 Euler steps with classifier-free guidance from fresh noise and decodes the result with $\mathcal{D}$.</p>
+    <p class="chapter-num"><span>04</span>Generation</p>
+    <h2 id="gen-title">Generate the latent from a single image</h2>
+    <p class="lede">A diffusion transformer, trained with <strong>flow matching</strong>, generates the VAE latent from noise in 50 steps. The VAE decoder then turns that latent into the TUDF grid. The transformer is conditioned on the input image in two ways:</p>
+    <ul class="cond-list">
+      <li><span class="badge-num">1</span><span><strong>Global geometric prior.</strong> Frozen MoGe-2 features enter every transformer block through <span class="hl-blue">cross-attention</span>, giving the overall layout and scale.</span></li>
+      <li><span class="badge-num">2</span><span><strong>Visible-latent inpainting.</strong> MoGe-2's visible point map is converted to a TUDF, encoded by the frozen VAE encoder into $z_{\text{vis}}$, and <span class="hl-teal">added</span> to the noisy latent through a zero-initialized layer: $\tilde z_t = z_t + \mathrm{MLP}_{\text{zero}}(z_{\text{vis}})$. This anchors the result to what the camera actually saw.</span></li>
+    </ul>
   </header>
-  <figure class="anim-fig wrap-wide" data-anim-fig="s4">
-    <div class="anim-frame">
-      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: straight noise-to-data paths, the constant velocity target, and Euler sampling"></video>
-    </div>
-    <figcaption class="beats" aria-label="Jump to a step of the animation">
-      <button type="button">Noise &amp; data</button><button type="button">Straight paths</button><button type="button">Velocity</button><button type="button">Sampling</button>
-    </figcaption>
-  </figure>
-
   <div class="wrap-wide">
+    <figure class="paper-fig paper-fig-mid">
+      <button class="fig-btn" type="button" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent diffusion transformer with dual conditioning (paper figure).">
+        <img src="figures/opt/architecture_dit-1600.webp" srcset="figures/opt/architecture_dit-800.webp 800w, figures/opt/architecture_dit-1600.webp 1162w"
+             sizes="(max-width: 1000px) 100vw, 960px" width="1162" height="442" loading="lazy" decoding="async"
+             alt="Latent diffusion transformer conditioned on MoGe-2 image tokens via cross-attention and on the visible-geometry latent via addition">
+      </button>
+      <figcaption class="caption">Training data: 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples).</figcaption>
+    </figure>
+
     <figure class="widget" id="widget-flow" data-widget="flow">
       <div class="widget-head">
         <p class="widget-kicker">Try it</p>
-        <h3 class="widget-title">Scrub a real denoising run</h3>
-        <p class="widget-desc">At every Euler step we decode the model's current estimate of the clean latent, $\hat{\mathbf{z}}_1$. Drag $t$ to watch the scene emerge.</p>
+        <h3 class="widget-title">Scrub a real generation</h3>
+        <p class="widget-desc">At each of the 50 steps, we decode the model's current estimate of the final latent and show it as a point cloud. Drag $t$ to watch the scene take shape.</p>
       </div>
       <div class="widget-body" data-widget-body>
         <p class="widget-placeholder">Denoising trajectory loads here.</p>
@@ -308,33 +310,10 @@
   </div>
 </section>
 
-<!-- ================================================================ 05 CONDITIONING -->
-<section class="chapter" id="conditioning" aria-labelledby="cond-title">
-  <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>05</span>Dual conditioning</p>
-    <h2 id="cond-title">What the image says, and what it shows</h2>
-    <p class="lede">A frozen MoGe-2 encoder turns the image into tokens that enter every DiT block through <span class="hl-blue">cross-attention</span>, supplying global layout and scale. Its visible point map is also converted into a visible-only TUDF, encoded as $\mathbf{z}_{\text{vis}}$, and <span class="hl-teal">added</span> to the noisy latent through a zero-initialised MLP, $\tilde{\mathbf{z}}_t = \mathbf{z}_t + \mathrm{MLP}_0(\mathbf{z}_{\text{vis}})$. This anchors the sample to what was observed. For classifier-free guidance, the negative branch drops both conditions.</p>
-  </header>
-  <figure class="anim-fig wrap-wide" data-anim-fig="s5">
-    <div class="anim-frame">
-      <video class="anim" muted playsinline loop preload="none" aria-label="Animation: MoGe-2 tokens via cross-attention, the visible latent via a zero-initialised MLP, and classifier-free guidance"></video>
-    </div>
-    <figcaption class="beats" aria-label="Jump to a step of the animation">
-      <button type="button">Image tokens</button><button type="button">Cross-attention</button><button type="button">Visible latent</button><button type="button">Fusion</button><button type="button">Guidance</button>
-    </figcaption>
-  </figure>
-  <div class="wrap-read fig-actions">
-    <p class="fine">Trained on 3D-FRONT (96k image–TUDF pairs from 18k rooms) and ScanNet++ (46k samples), following the LaRI and NOVA3R splits.</p>
-    <button class="btn btn-ghost" type="button" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent DiT and dual conditioning (paper figure).">
-      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Paper figure
-    </button>
-  </div>
-</section>
-
 <!-- ================================================================ RESULTS -->
 <section class="chapter" id="results" aria-labelledby="results-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>06</span>Results</p>
+    <p class="chapter-num"><span>05</span>Results</p>
     <h2 id="results-title">Compare it yourself</h2>
     <p class="lede">Pick a scene and a baseline. The baseline is shown next to <span class="ours-mark">VolFill</span>. Cameras are synced: orbit either one and look behind the furniture.</p>
   </header>
@@ -364,7 +343,7 @@
             </model-viewer>
             <div class="stage-loader" aria-hidden="true"><span></span></div>
           </div>
-          <figcaption class="panel-label" id="viewer-right-label">MoGe2</figcaption>
+          <figcaption class="panel-label panel-base"><span class="swatch swatch-base" aria-hidden="true"></span><span id="viewer-right-label">MoGe2</span></figcaption>
         </figure>
         <figure class="panel panel-ours">
           <div class="stage stage-panel">
@@ -436,8 +415,7 @@
 <!-- ================================================================ QUANTITATIVE -->
 <section class="chapter" id="quantitative" aria-labelledby="quant-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>07</span>Quantitative</p>
-    <h2 id="quant-title">Best where it is hardest: behind things</h2>
+    <h2 class="chapter-num" id="quant-title"><span>06</span>Quantitative</h2>
     <p class="lede">Pixel-aligned models win on visible surfaces, which they are built for. On the occluded and complete subsets, VolFill leads on both benchmarks.</p>
   </header>
 
@@ -547,7 +525,7 @@
 <!-- ================================================================ ABLATIONS -->
 <section class="chapter" id="ablations" aria-labelledby="abl-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>08</span>Ablations</p>
+    <p class="chapter-num"><span>07</span>Ablations</p>
     <h2 id="abl-title">Both conditions matter</h2>
     <p class="lede">The visible latent alone (①) cannot recover unobserved structure. Image-only conditioning with DINOv2 (②) or MoGe-2 (③) hallucinates rough layouts but loses detail. The dual setup (④), MoGe-2 cross-attention <em>plus</em> additive visible latent, gives the sharpest, most complete geometry.</p>
   </header>
@@ -592,8 +570,7 @@
 <!-- ================================================================ LIMITATIONS -->
 <section class="chapter chapter-tight" id="limitations" aria-labelledby="lim-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>09</span>Limitations</p>
-    <h2 id="lim-title">What's still hard</h2>
+    <h2 class="chapter-num" id="lim-title"><span>08</span>Limitations</h2>
   </header>
   <div class="wrap-read">
     <ul class="limits">
@@ -606,7 +583,7 @@
 <!-- ================================================================ BIBTEX -->
 <section class="chapter chapter-tight" id="bibtex" aria-labelledby="bib-title">
   <header class="chapter-head wrap-read">
-    <p class="chapter-num"><span>10</span>Cite</p>
+    <p class="chapter-num"><span>09</span>Cite</p>
     <h2 id="bib-title">BibTeX</h2>
   </header>
   <div class="wrap-read">

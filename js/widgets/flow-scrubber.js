@@ -33,8 +33,7 @@ export async function initFlowScrubber(root) {
         <div class="flow-buttons">
           <button type="button" class="chip-btn" data-play aria-pressed="false">Play</button>
         </div>
-        <p class="flow-eq" data-eq></p>
-        <p class="flow-note">Early steps decode to a blurry average layout; detail and thin structures appear as $t \\to 1$. Behind the visible surfaces, the model is <em>generating</em>.</p>
+        <p class="flow-note">Early steps decode to a rough layout; detail and thin structures appear in later steps. Everything behind the visible surfaces is <em>generated</em>.</p>
       </div>
     </div>`;
   const frameImg = body.querySelector('.flow-frame');
@@ -42,7 +41,6 @@ export async function initFlowScrubber(root) {
   const stepEl = body.querySelector('.flow-step');
   const range = body.querySelector('#flow-t');
   const outT = body.querySelector('output');
-  const eq = body.querySelector('[data-eq]');
   const playBtn = body.querySelector('[data-play]');
   const sceneSeg = body.querySelector('.flow-scenes');
   window.renderMathInElement?.(body.querySelector('.flow-note'), {
@@ -59,8 +57,6 @@ export async function initFlowScrubber(root) {
     else frameImg.src = `${ROOT}/${scene.name}/${f.src}`;
     outT.textContent = f.t.toFixed(2);
     stepEl.textContent = `Euler step ${f.step} / ${scene.total_steps}`;
-    const k = (s) => window.katex?.renderToString(s, { throwOnError: false }) ?? s;
-    eq.innerHTML = `${k(`\\mathbf{z}_t = ${(1 - f.t).toFixed(2)}\\,\\boldsymbol{\\epsilon} + ${f.t.toFixed(2)}\\,\\hat{\\mathbf{z}}_1`)}`;
     root.dataset.sig = `${scene.name}-${i}`;
   };
 

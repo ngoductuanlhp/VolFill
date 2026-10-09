@@ -25,7 +25,7 @@ from serve import make_server  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SIZES = {"desktop": (1440, 900, 1), "tablet": (1024, 768, 1), "mobile": (390, 844, 2)}
-SECTIONS = ["top", "problem", "tudf", "vae", "flow", "conditioning", "results",
+SECTIONS = ["top", "problem", "tudf", "vae", "generation", "results",
             "quantitative", "ablations", "limitations", "bibtex"]
 ASSET_TYPES = {"image", "media", "font", "stylesheet", "script"}
 
