@@ -319,6 +319,8 @@
 .dit .d-tokens rect { fill: var(--blue); }
 .dit .d-latent rect { fill: var(--green); }
 .dit .d-plus { fill: var(--surface); stroke: var(--text-muted); stroke-width: 2; }
+.dit .d-snow { color: var(--occluded); }
+.dit .d-snow-bg { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.5; }
 .dit .d-badge { fill: var(--surface); stroke-width: 1.5; }
 .dit .d-badge-blue { stroke: var(--blue); }
 .dit .d-badge-green { stroke: var(--green); }

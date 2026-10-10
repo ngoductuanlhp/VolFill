@@ -112,7 +112,13 @@ async def functional_checks(page, rep, size):
     await wait_mv_loaded(page, "#viewer-right")
 
     if size != "mobile":
+        # Lazy widgets above the viewer can shift layout; re-measure right before dragging.
+        await page.evaluate("document.querySelector('#viewer-left').scrollIntoView({block: 'center'})")
+        await page.wait_for_timeout(800)
         box = await page.locator("#viewer-left").bounding_box()
+        hit = await page.evaluate(f"document.elementFromPoint({box['x'] + box['width'] / 2}, {box['y'] + box['height'] / 2})?.id")
+        if hit != "viewer-left":
+            print(f"    (drag target covered by #{hit})")
         orbit0 = await page.evaluate("document.querySelector('#viewer-right').getCameraOrbit().theta")
         cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
         await page.mouse.move(cx, cy)
@@ -122,7 +128,9 @@ async def functional_checks(page, rep, size):
         await page.mouse.up()
         await page.wait_for_timeout(400)
         orbit1 = await page.evaluate("document.querySelector('#viewer-right').getCameraOrbit().theta")
-        rep.check("camera sync propagates", abs(orbit1 - orbit0) > 1e-3, f"theta {orbit0:.3f} -> {orbit1:.3f}")
+        left1 = await page.evaluate("document.querySelector('#viewer-left').getCameraOrbit().theta")
+        rep.check("camera sync propagates", abs(orbit1 - orbit0) > 1e-3,
+                  f"right theta {orbit0:.3f} -> {orbit1:.3f} (left {left1:.3f}, hit #{hit})")
 
     # Inline animations
     fig = page.locator("[data-anim-fig='s1']")

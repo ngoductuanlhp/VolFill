@@ -196,7 +196,7 @@ def export_poster(args):
     """Static stand-in for the hero <model-viewer> (same default orbit: front, 15 deg up)."""
     pts, col = load_glb_points(args.glb, with_colors=True)
     W, H = args.size
-    basis = view_basis(0.0, 15.0)
+    basis = view_basis(args.yaw, args.elev)
     u, v, _ = project(pts, basis)
     lo_u, hi_u = np.percentile(u, [0.2, 99.8])
     lo_v, hi_v = np.percentile(v, [0.2, 99.8])
@@ -232,6 +232,8 @@ def main():
     po.add_argument("--out", default="media/teaser-poster.webp")
     po.add_argument("--size", type=int, nargs=2, default=[1280, 656])
     po.add_argument("--fill", type=float, default=0.62)
+    po.add_argument("--yaw", type=float, default=0.0)
+    po.add_argument("--elev", type=float, default=15.0, help="15 deg matches the <model-viewer> default orbit")
     args = ap.parse_args()
     {"tudf": export_tudf, "flow": export_flow, "poster": export_poster}[args.cmd](args)
 

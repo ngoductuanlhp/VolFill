@@ -292,7 +292,7 @@
       <div class="dit-scroll">
         <svg class="dit" viewBox="0 0 1120 380" role="img" aria-labelledby="dit-title dit-desc">
           <title id="dit-title">VolFill generation pipeline</title>
-          <desc id="dit-desc">The input image goes to a frozen MoGe-2. Path 1: its image tokens enter every block of the denoising transformer through cross-attention. Path 2: its visible geometry is converted to a TUDF, encoded by the frozen VAE encoder into a visible latent, passed through a zero-initialised MLP and added to the noisy latent. The transformer runs for 50 steps; the VAE decoder turns the final latent into the amodal 3D output.</desc>
+          <desc id="dit-desc">The input image goes to a frozen MoGe-2. Path 1: its image tokens enter every block of the denoising transformer through cross-attention. Path 2: its visible geometry, converted to a TUDF, is encoded by the frozen VAE encoder into a visible latent, passed through a zero-initialised MLP and added to the noisy latent. The transformer runs for 50 steps; the frozen VAE decoder turns the final latent into the amodal 3D output. A snowflake marks frozen modules.</desc>
           <defs>
             <marker id="dit-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" class="d-head"/>
@@ -303,11 +303,13 @@
             <marker id="dit-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" class="d-head-green"/>
             </marker>
+            <!-- Font Awesome Free 6.5.2 "snowflake" (regular), CC BY 4.0, https://fontawesome.com/license/free; same glyph as the paper figure -->
+            <symbol id="dit-snow" viewBox="0 0 448 512"><path fill="currentColor" d="M224 0c13.3 0 24 10.7 24 24V70.1l23-23c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-57 57v76.5l66.2-38.2 20.9-77.8c3.4-12.8 16.6-20.4 29.4-17s20.4 16.6 17 29.4L373 142.2l37.1-21.4c11.5-6.6 26.2-2.7 32.8 8.8s2.7 26.2-8.8 32.8L397 183.8l31.5 8.4c12.8 3.4 20.4 16.6 17 29.4s-16.6 20.4-29.4 17l-77.8-20.9L272 256l66.2 38.2 77.8-20.9c12.8-3.4 26 4.2 29.4 17s-4.2 26-17 29.4L397 328.2l37.1 21.4c11.5 6.6 15.4 21.3 8.8 32.8s-21.3 15.4-32.8 8.8L373 369.8l8.4 31.5c3.4 12.8-4.2 26-17 29.4s-26-4.2-29.4-17l-20.9-77.8L248 297.6v76.5l57 57c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-23-23V488c0 13.3-10.7 24-24 24s-24-10.7-24-24V441.9l-23 23c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l57-57V297.6l-66.2 38.2-20.9 77.8c-3.4 12.8-16.6 20.4-29.4 17s-20.4-16.6-17-29.4L75 369.8 37.9 391.2c-11.5 6.6-26.2 2.7-32.8-8.8s-2.7-26.2 8.8-32.8L51 328.2l-31.5-8.4c-12.8-3.4-20.4-16.6-17-29.4s16.6-20.4 29.4-17l77.8 20.9L176 256l-66.2-38.2L31.9 238.6c-12.8 3.4-26-4.2-29.4-17s4.2-26 17-29.4L51 183.8 13.9 162.4c-11.5-6.6-15.4-21.3-8.8-32.8s21.3-15.4 32.8-8.8L75 142.2l-8.4-31.5c-3.4-12.8 4.2-26 17-29.4s26 4.2 29.4 17l20.9 77.8L200 214.4V137.9L143 81c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l23 23V24c0-13.3 10.7-24 24-24z"/></symbol>
             <clipPath id="dit-clip-in"><rect x="20" y="52" width="140" height="110" rx="10"/></clipPath>
           </defs>
 
           <!-- input -->
-          <image href="models/scrream_scene09_full_00_000275/input.jpg" x="20" y="52" width="140" height="110" preserveAspectRatio="xMidYMid slice" clip-path="url(#dit-clip-in)"/>
+          <image href="models/nrgbd_breakfast_room_000000/input.jpg" x="20" y="52" width="140" height="110" preserveAspectRatio="xMidYMid slice" clip-path="url(#dit-clip-in)"/>
           <rect x="20" y="52" width="140" height="110" rx="10" class="d-frame"/>
           <text x="90" y="186" class="d-sub" text-anchor="middle">input image</text>
 
@@ -315,7 +317,7 @@
           <path d="M160 107 H196" class="d-line" marker-end="url(#dit-arrow)"/>
           <rect x="200" y="79" width="130" height="56" rx="12" class="d-box"/>
           <text x="265" y="112" class="d-label" text-anchor="middle">MoGe-2</text>
-          <text x="265" y="153" class="d-tag" text-anchor="middle">frozen</text>
+          <circle cx="330" cy="79" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="323.5" y="71.5" width="13" height="15"/>
 
           <!-- path 1: image tokens -> cross-attention -->
           <g class="p-tokens">
@@ -348,14 +350,13 @@
 
           <!-- path 2: visible geometry -> z_vis -> MLP_0 -> + -->
           <g class="p-visible">
-            <path d="M265 135 V256" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <rect x="200" y="262" width="130" height="56" rx="12" class="d-box"/>
-            <text x="265" y="286" class="d-label" text-anchor="middle">visible</text>
-            <text x="265" y="306" class="d-label" text-anchor="middle">TUDF</text>
-            <path d="M330 290 H366" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <path d="M265 135 V226" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <image href="media/dit-visible.webp" x="190" y="232" width="150" height="112" preserveAspectRatio="xMidYMid meet"/>
+            <text x="265" y="362" class="d-sub d-green-text" text-anchor="middle">visible geometry</text>
+            <path d="M342 290 H366" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
             <rect x="370" y="262" width="92" height="56" rx="12" class="d-box"/>
             <text x="416" y="296" class="d-label" text-anchor="middle">Encoder</text>
-            <text x="416" y="336" class="d-tag" text-anchor="middle">frozen</text>
+            <circle cx="462" cy="262" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="455.5" y="254.5" width="13" height="15"/>
             <path d="M462 290 H492" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
             <g class="d-latent">
               <rect x="497" y="272" width="11" height="11" rx="2"/><rect x="511" y="272" width="11" height="11" rx="2"/><rect x="525" y="272" width="11" height="11" rx="2"/>
@@ -375,13 +376,18 @@
           <path d="M790 290 H714" class="d-line" marker-end="url(#dit-arrow)"/>
           <text x="800" y="286" class="d-sub">noisy latent <tspan class="d-math">z</tspan><tspan class="d-subs d-math" dy="4">t</tspan></text>
 
+          <!-- legend -->
+          <use class="d-snow" href="#dit-snow" x="20" y="353" width="14" height="16"/>
+          <text x="42" y="366" class="d-sub">frozen</text>
+
           <!-- decode -->
           <path d="M830 134 H884" class="d-line" marker-end="url(#dit-arrow)"/>
           <rect x="888" y="106" width="92" height="56" rx="12" class="d-box"/>
           <text x="934" y="140" class="d-label" text-anchor="middle">Decoder</text>
+          <circle cx="980" cy="106" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="973.5" y="98.5" width="13" height="15"/>
           <path d="M980 134 H1010 V196" class="d-line" marker-end="url(#dit-arrow)"/>
-          <image href="media/widgets/flow/scene09/step_49.webp" x="945" y="200" width="150" height="112" preserveAspectRatio="xMidYMid meet"/>
-          <text x="1020" y="336" class="d-sub d-ours-text" text-anchor="middle">amodal 3D output</text>
+          <image href="media/dit-output.webp" x="918" y="184" width="196" height="147" preserveAspectRatio="xMidYMid meet"/>
+          <text x="1016" y="346" class="d-sub d-ours-text" text-anchor="middle">amodal 3D output</text>
         </svg>
       </div>
       <figcaption id="dit-cap" class="caption">Trained on 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples). <button type="button" class="link-btn" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent DiT with dual conditioning (paper figure).">Paper figure</button></figcaption>
