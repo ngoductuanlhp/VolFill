@@ -23,6 +23,22 @@ export async function fetchList(url) {
   return (await resp.text()).split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
+// glTF point clouds load as 1-device-pixel points (three.js PointsMaterial, no size attenuation), which look
+// thin and moire-striped on high-DPI screens. model-viewer has no point-size option, so set it on the loaded
+// materials through its internal scene (model-viewer is pinned to 4.0.0 above).
+const POINT_CSS_PX = 1.6;
+
+export function thickenPoints(mv) {
+  const key = Object.getOwnPropertySymbols(mv).find((s) => s.description === 'scene');
+  const scene = key && mv[key];
+  if (!scene?.traverse) return;
+  const size = POINT_CSS_PX * Math.min(window.devicePixelRatio || 1, 3);
+  scene.traverse((o) => {
+    if (o.isPoints && o.material) { o.material.size = size; o.material.needsUpdate = true; }
+  });
+  scene.queueRender?.();
+}
+
 export function trackLoading(mv) {
   const stage = mv.parentElement;
   const bar = stage.querySelector('.stage-loader span');
@@ -33,7 +49,7 @@ export function trackLoading(mv) {
     if (bar) bar.style.width = `${Math.round(p * 100)}%`;
     if (p >= 1) setTimeout(done, 250);
   });
-  mv.addEventListener('load', done);
+  mv.addEventListener('load', () => { done(); thickenPoints(mv); });
   mv.addEventListener('error', done);
 }
 
