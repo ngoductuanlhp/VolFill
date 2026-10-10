@@ -56,12 +56,14 @@ models/<sample_id>/input.jpg  ours.glb  moge2.glb  da3.glb  nova3r.glb  lari.glb
 
 ## Workflows
 
-**Add qualitative scenes** (run in the `volfill` env, which has open3d/trimesh):
+**Add qualitative scenes** (needs numpy/scipy/pillow/trimesh; open3d optional, the `volfill` env on AWS has no open3d):
 ```bash
-python scripts/build_quali_glbs.py --quali_root ../VolFill/results/quali_results --out_dir models/
+python scripts/build_quali_glbs.py --quali_root ../VolFill/results/quali_results --out_dir models/ \
+    --intrinsics_root <moge_root>          # <moge_root>/<dataset>/<scene>/<frame>/moge.npz
 python scripts/validate_samples.py --methods ours moge2 da3 nova3r lari
 # optionally edit models/valid_samples_teaser.txt
 ```
+Points are coloured as in the paper (`--color visibility`, default): first hit along each input-camera ray keeps the photo colour, everything else is `#6E8FC4` (hidden), judged on each method's own geometry. It needs the input camera: normalised MoGe intrinsics (the paper workspace caches them in `paper_figs/teaser/_cache/data/moge/ours/`) or `intrinsics` in the sample's metadata.json. Regenerate `media/teaser-poster.webp` afterwards (below).
 `build_quali_glbs.py` negates Y *and* Z (OpenCV -> glTF); flipping only one mirrors the scene.
 
 **Re-render the animations** (needs manim, ffmpeg with libvpx-vp9/libx264, and LaTeX with dvisvgm; TinyTeX works):
@@ -75,8 +77,12 @@ Each scene calls `self.mark()` at the start of every beat. The number of marks m
 **Widget data:**
 ```bash
 python scripts/export_widget_data.py tudf --glb models/scrream_scene09_full_00_000275/ours.glb      # W1 (also feeds S1-S3)
-python scripts/export_widget_data.py flow --traj_dir <run>/out/<scene>/<frame> --name scene09        # W2, per scene
+python scripts/export_widget_data.py flow --traj_dir <run>/out/<scene>/<frame> --name scene09 \
+    --intrinsics <moge_root>/scrream/scene09_full_00/000275/moge.npz                                 # W2, per scene
+python scripts/export_widget_data.py vae --gt gt_tudf_256.npz --recon recon_tudf_256.npz \
+    --occ occ_64.npy --meta metadata.json --height 0.35                                             # S3 data
 ```
+VolFill grids are indexed `(z, y, x)` while `bbox_min/max` are `(x, y, z)`; `tudf_to_points` handles this (before Oct 2026 it swapped x and z, so the W2 frames showed transposed scenes). W2 frames use the same paper colouring as the GLBs. S3 reads `media/widgets/vae-slice-{gt,recon,occ}.png` + `vae-slice.json`: one gravity-aligned slice through the real VAE stages of NRGB-D kitchen/001435 (GT TUDF, decoder 64³ occupancy, reconstruction), produced with the paper VAE in the paper workspace (`paper_figs/arch/_cache/`).
 W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evaluation.eval_latent_flow_visible --mode inference_all_steps ...` (see `scripts/infer/infer_traj_webpage.sbatch` there). It writes `step_XXX/pred_tudf_256.npz` per Euler step. List the exported scenes in `media/widgets/flow/index.json`. The code integrates t from 1 → 0; the page shows the paper's convention (0 = noise, 1 = data).
 
 **Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. `figures/architecture_{vae,dit}.png` are 2400-px renders of the paper's Fig. 2 / Fig. 3 PDFs (opened by the "Paper figure" links). **Logo:** `scripts/logo/render_logo.py` (Blender) + `scripts/logo/make_assets.sh`.

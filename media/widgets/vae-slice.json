@@ -1,0 +1,14 @@
+{
+ "source": "nrgbd_kitchen_001435",
+ "height_frac": 0.35,
+ "voxel_size": 0.01572789018973708,
+ "cell_px": 4.0,
+ "dmax": 24.0,
+ "width": 264,
+ "height": 201,
+ "occ_cells": [
+  66,
+  51
+ ],
+ "occ_kept": 496
+}

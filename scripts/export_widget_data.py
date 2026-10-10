@@ -15,6 +15,7 @@ Points live in the OpenCV camera frame (+x right, +y down, +z forward), matching
 import argparse
 import json
 import struct
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -145,11 +146,12 @@ def render_points(pts, colors, size, basis, fit, splat=2):
 
 
 def tudf_to_points(tudf, meta, thr):
-    idx = np.argwhere(tudf < thr).astype(np.float32)
+    """Voxel centres with TUDF < thr. VolFill grids are indexed (z, y, x), bbox is (x, y, z)."""
+    idx = np.argwhere(tudf < thr).astype(np.float32)[:, ::-1]
     if len(idx) == 0:
         return np.zeros((0, 3), np.float32)
     lo, hi = np.array(meta["bbox_min"]), np.array(meta["bbox_max"])
-    return lo + (idx + 0.5) / tudf.shape[0] * (hi - lo)
+    return lo + (idx + 0.5) / np.array(tudf.shape[::-1], np.float32) * (hi - lo)
 
 
 def export_flow(args):
@@ -168,6 +170,20 @@ def export_flow(args):
 
     out = OUT / "flow" / args.name
     out.mkdir(parents=True, exist_ok=True)
+    img_src = traj / "image.jpg"
+    if args.color == "visibility":
+        # Paper colouring (Fig. 1): first hit along each input-camera ray = photo colour, rest slate.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from build_quali_glbs import _camera_K, _visibility_colors
+        photo = np.asarray(Image.open(img_src).convert("RGB"))
+        if args.intrinsics is not None:
+            Kn = np.load(args.intrinsics)["intrinsics"].astype(np.float64)
+            Hp, Wp = photo.shape[:2]
+            K = np.array([[Kn[0, 0] * Wp, 0, Kn[0, 2] * Wp], [0, Kn[1, 1] * Hp, Kn[1, 2] * Hp], [0, 0, 1]])
+        else:
+            K = _camera_K(traj, "", None, photo.shape[:2])          # pixel intrinsics from metadata.json
+        assert K is not None, "--color visibility needs --intrinsics <moge.npz> (or intrinsics in metadata.json)"
+        voxel = float(np.asarray(final_meta["extent_xyz"])[0]) / 256
     keep = sorted(set(np.linspace(0, len(steps) - 1, min(args.frames, len(steps))).round().astype(int)))
     frames = []
     for k in keep:
@@ -176,7 +192,10 @@ def export_flow(args):
         pts = tudf_to_points(np.load(s / "pred_tudf_256.npz")["tudf"], meta, args.thr)
         if len(pts) > args.max_points:
             pts = pts[np.random.default_rng(0).choice(len(pts), args.max_points, replace=False)]
-        col = plasma(1 - (pts[:, 1] - y_lo) / (y_hi - y_lo + 1e-8))  # +y down -> invert
+        if args.color == "visibility":
+            col = _visibility_colors(pts, photo, K, voxel)[:, :3] / 255.0
+        else:
+            col = plasma(1 - (pts[:, 1] - y_lo) / (y_hi - y_lo + 1e-8))  # +y down -> invert
         img = render_points(pts, col, (W, H), basis, fit)
         name = f"step_{k:02d}.webp"
         Image.fromarray(img, "RGBA").save(out / name, "WEBP", quality=82, method=6)
@@ -184,7 +203,6 @@ def export_flow(args):
         frames.append({"src": name, "step": int(meta["step"]) + 1, "t": round(1 - float(meta["t_prev"]), 4),
                        "points": int(len(pts))})
         print(f"  {name}  t={frames[-1]['t']:.2f}  pts={len(pts)}")
-    img_src = traj / "image.jpg"
     if img_src.exists():
         Image.open(img_src).convert("RGB").save(out / "input.jpg", quality=85)
     (out / "flow.json").write_text(json.dumps({"total_steps": final_meta["total_steps"], "frames": frames}, indent=1))
@@ -208,6 +226,78 @@ def export_poster(args):
     print(f"{out.relative_to(ROOT)}  {W}x{H}  {out.stat().st_size // 1024} KB")
 
 
+# ----------------------------------------------------------------------------- S3 (real VAE stages)
+
+def gravity_frame(P, vox, iters=400, seed=0):
+    """Rotation Rg (p' = Rg p) that levels the floor (up = -y, OpenCV). Floor = dominant near-horizontal
+    plane among the lowest points (RANSAC + SVD refit); same procedure as the paper's figure renders."""
+    rng = np.random.default_rng(seed)
+    low = P[P[:, 1] > np.percentile(P[:, 1], 60)]
+    low = low[rng.choice(len(low), min(len(low), 40000), replace=False)]
+    best, bn, bd = 0, None, None
+    for _ in range(iters):
+        a, b, c = low[rng.choice(len(low), 3, replace=False)]
+        n = np.cross(b - a, c - a)
+        if np.linalg.norm(n) < 1e-9:
+            continue
+        n /= np.linalg.norm(n)
+        if abs(n[1]) < np.cos(np.radians(45)):
+            continue
+        cnt = int((np.abs(low @ n - n @ a) < 2 * vox).sum())
+        if cnt > best:
+            best, bn, bd = cnt, n, -n @ a
+    inl = low[np.abs(low @ bn + bd) < 2 * vox]
+    n = np.linalg.svd(inl - inl.mean(0))[2][2]
+    up = -n if n[1] > 0 else n
+    v, cth = np.cross(up, [0.0, -1.0, 0.0]), float(up @ [0.0, -1.0, 0.0])
+    vx = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    return np.eye(3) + vx + vx @ vx / (1 + cth)
+
+
+def export_vae(args):
+    """One horizontal, gravity-aligned slice through the real VAE stages for S3: distance to the GT surface,
+    distance to the VAE reconstruction, and the decoder's predicted 64^3 occupancy cells cut by the plane."""
+    meta = json.loads(Path(args.meta).read_text())
+    gt, rec, occ = np.load(args.gt)["tudf"], np.load(args.recon)["tudf"], np.load(args.occ)
+    lo, hi = np.array(meta["bbox_min"]), np.array(meta["bbox_max"])
+    vox = float(hi[0] - lo[0]) / gt.shape[0]
+    Rg = gravity_frame(tudf_to_points(gt, meta, 1.0), vox)
+    G, R = tudf_to_points(gt, meta, 1.0) @ Rg.T, tudf_to_points(rec, meta, 1.0) @ Rg.T
+    y_floor, y_ceil = np.percentile(G[:, 1], [99.5, 0.5])          # +y is down
+    y0 = y_floor - args.height * (y_floor - y_ceil)
+    (x0, z0), (x1, z1) = G[:, [0, 2]].min(0) - 4 * vox, G[:, [0, 2]].max(0) + 4 * vox
+    xs, zs = np.arange(x0, x1, vox), np.arange(z1, z0, -vox)      # far side at the top, camera at the bottom
+    gx, gz = np.meshgrid(xs, zs)
+    q = np.stack([gx.ravel(), np.full(gx.size, y0), gz.ravel()], 1)
+
+    def dist(P):
+        d, _ = cKDTree(P).query(q, distance_upper_bound=DMAX * vox * 1.5)
+        return np.minimum(np.nan_to_num(d / vox, posinf=DMAX), DMAX).reshape(gx.shape)
+
+    # occupancy on the plane: sample each 2D cell (2x2 sub-samples), map back to the grid frame, look up occ
+    cell = (hi[0] - lo[0]) / occ.shape[0]
+    nr, nc = int(np.ceil(len(zs) * vox / cell)), int(np.ceil(len(xs) * vox / cell))
+    sub = (np.arange(2) + 0.5) / 2
+    cx = x0 + (np.arange(nc)[:, None] + sub[None]).ravel() * cell
+    cz = z1 - (np.arange(nr)[:, None] + sub[None]).ravel() * cell
+    qx, qz = np.meshgrid(cx, cz)
+    P = np.stack([qx.ravel(), np.full(qx.size, y0), qz.ravel()], 1) @ Rg     # gravity frame -> camera frame
+    ijk = np.floor((P - lo) / cell).astype(int)                                 # (x, y, z) cell index
+    inside = ((ijk >= 0) & (ijk < occ.shape[0])).all(1)
+    hit = np.zeros(len(P), bool)
+    hit[inside] = occ[ijk[inside, 2], ijk[inside, 1], ijk[inside, 0]] > args.occ_thr
+    m = hit.reshape(nr, 2, nc, 2).any(axis=(1, 3))
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name, d in (("gt", dist(G)), ("recon", dist(R))):
+        Image.fromarray(np.round(d / DMAX * 255).astype(np.uint8), "L").save(OUT / f"vae-slice-{name}.png", optimize=True)
+    Image.fromarray(m.astype(np.uint8) * 255, "L").save(OUT / "vae-slice-occ.png", optimize=True)
+    info = {"source": args.source, "height_frac": args.height, "voxel_size": vox, "cell_px": float(cell / vox),
+            "dmax": DMAX, "width": len(xs), "height": len(zs), "occ_cells": [int(m.shape[1]), int(m.shape[0])],
+            "occ_kept": int(m.sum())}
+    (OUT / "vae-slice.json").write_text(json.dumps(info, indent=1))
+    print(f"vae-slice {len(xs)}x{len(zs)} px, occupancy {m.shape[1]}x{m.shape[0]} cells ({m.sum()} kept)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -227,6 +317,17 @@ def main():
     f.add_argument("--yaw", type=float, default=-30)
     f.add_argument("--elev", type=float, default=38)
     f.add_argument("--max_points", type=int, default=400_000)
+    f.add_argument("--color", choices=["visibility", "height"], default="visibility",
+                   help="visibility = paper colouring (photo / slate hidden); height = old plasma")
+    f.add_argument("--intrinsics", default=None, help="moge.npz with normalised intrinsics of the input photo")
+    va = sub.add_parser("vae")
+    va.add_argument("--gt", required=True, help="GT tudf npz (key tudf, voxel units)")
+    va.add_argument("--recon", required=True, help="VAE reconstruction of --gt (same format)")
+    va.add_argument("--occ", required=True, help="decoder occupancy probabilities, 64^3 .npy")
+    va.add_argument("--meta", required=True, help="metadata.json with bbox_min / bbox_max")
+    va.add_argument("--height", type=float, default=0.4, help="slice height, fraction floor -> top")
+    va.add_argument("--occ_thr", type=float, default=0.5)
+    va.add_argument("--source", default="nrgbd_kitchen_001435")
     po = sub.add_parser("poster")
     po.add_argument("--glb", required=True)
     po.add_argument("--out", default="media/teaser-poster.webp")
@@ -235,7 +336,7 @@ def main():
     po.add_argument("--yaw", type=float, default=0.0)
     po.add_argument("--elev", type=float, default=15.0, help="15 deg matches the <model-viewer> default orbit")
     args = ap.parse_args()
-    {"tudf": export_tudf, "flow": export_flow, "poster": export_poster}[args.cmd](args)
+    {"tudf": export_tudf, "flow": export_flow, "poster": export_poster, "vae": export_vae}[args.cmd](args)
 
 
 if __name__ == "__main__":

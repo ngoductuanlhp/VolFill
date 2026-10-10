@@ -6,15 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 from manim import DOWN, LEFT, RIGHT, UP, Arrow, FadeIn, FadeOut, GrowArrow, Group
 
-from common import P, PageScene, label, load_slice, raster, rgb
-
-
-def pool(mask, f):
-    h, w = mask.shape
-    H, W = -(-h // f), -(-w // f)
-    pad = np.zeros((H * f, W * f), bool)
-    pad[:h, :w] = mask
-    return pad.reshape(H, f, W, f).any(axis=(1, 3))
+from common import P, PageScene, label, load_vae_slice, raster, rgb
 
 
 def cells(mask, color, cell=6, gap=1, alpha=255):
@@ -32,11 +24,12 @@ def fine(mask, color):
 
 
 class S3VAE(PageScene):
-    """256^3 TUDF -> latent -> dense to 64^3, keep surface cells -> sparse to 256^3. Kept minimal on purpose."""
+    """256^3 TUDF -> latent -> dense to 64^3, keep surface cells -> sparse to 256^3. Kept minimal on purpose.
+    Real data from the paper's VAE (NRGB-D kitchen, as in Fig. 2): GT slice, predicted occupancy, reconstruction."""
 
     def construct(self):
-        d, _ = load_slice()
-        band = d < 3.0
+        gt, rec, m64, _ = load_vae_slice()
+        band = gt < 3.0
         PW, Y = 4.0, 0.3
         XL, XC, XR = -4.7, 0.0, 4.7
 
@@ -64,7 +57,6 @@ class S3VAE(PageScene):
 
         # ---------------------------------------------------------------- beat 1: dense to 64^3, keep surface cells
         self.mark()
-        m64 = pool(band, 4)
         dense = panel(cells(np.ones_like(m64), P["teal"], cell=6, gap=1, alpha=90), XR)
         kept = panel(cells(m64, P["teal"], cell=6, gap=1), XR)
         a2 = Arrow(code.get_right(), dense.get_left(), buff=0.3, color=P["muted"], stroke_width=5)
@@ -79,7 +71,7 @@ class S3VAE(PageScene):
 
         # ---------------------------------------------------------------- beat 2: sparse to 256^3
         self.mark()
-        out = panel(fine(band, P["yellow"]), XR)
+        out = panel(fine(rec < 3.0, P["yellow"]), XR)
         out_tag = tag(r"sparse $\to 256^3$", out, P["yellow"])
         self.play(FadeOut(kept), FadeIn(out), FadeOut(kept_tag), FadeIn(out_tag), run_time=1.2)
         self.wait(2.4)

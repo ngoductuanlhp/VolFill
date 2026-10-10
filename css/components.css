@@ -190,6 +190,8 @@
 }
 .swatch { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
 .swatch-ours { background: var(--yellow); }
+.swatch-visible { background: var(--visible); }
+.swatch-hidden { background: var(--occluded); }
 .input-inset {
   position: absolute; left: 16px; bottom: 16px; z-index: 2;
   width: clamp(110px, 18%, 220px);

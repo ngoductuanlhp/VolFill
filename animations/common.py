@@ -43,6 +43,15 @@ def label(text, color=None, size=40, math=False):
 
 # ------------------------------------------------------------------ real slice
 
+def load_vae_slice():
+    """Real VAE stages on one kitchen slice (scripts/export_widget_data.py vae): distance to the GT surface and
+    to the VAE reconstruction (voxels), and the decoder's predicted 64^3 occupancy cells cut by the plane."""
+    meta = json.loads((SLICE_JSON.parent / "vae-slice.json").read_text())
+    d = lambda n: np.asarray(Image.open(SLICE_PNG.parent / f"vae-slice-{n}.png"), np.float32) / 255.0 * meta["dmax"]
+    occ = np.asarray(Image.open(SLICE_PNG.parent / "vae-slice-occ.png")) > 0
+    return d("gt"), d("recon"), occ, meta
+
+
 def load_slice():
     d = np.asarray(Image.open(SLICE_PNG), dtype=np.float32) / 255.0
     meta = json.loads(SLICE_JSON.read_text())
