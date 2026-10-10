@@ -321,6 +321,29 @@
 .dit .d-plus { fill: var(--surface); stroke: var(--text-muted); stroke-width: 2; }
 .dit .d-snow { color: var(--occluded); }
 .dit .d-snow-bg { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.5; }
+.dit .d-panel { fill: color-mix(in srgb, var(--occluded) 9%, var(--surface)); stroke: color-mix(in srgb, var(--occluded) 55%, var(--border-strong)); stroke-width: 1.5; }
+.dit .d-trn { fill: color-mix(in srgb, var(--occluded) 14%, var(--surface)); stroke: color-mix(in srgb, var(--occluded) 55%, var(--border-strong)); }
+.dit .d-fire { color: var(--hot); }
+.dit .d-dot-visible { fill: var(--visible); }
+.dit .d-dot-hidden { fill: var(--occluded); }
+.vae-fig { max-width: 1040px; }   /* same width as the animation above it */
+.dit .d-panel-enc { fill: color-mix(in srgb, var(--blue) 7%, var(--surface)); stroke: color-mix(in srgb, var(--blue) 45%, var(--border-strong)); stroke-width: 1.5; }
+.dit .d-panel-dec { fill: color-mix(in srgb, var(--yellow) 6%, var(--surface)); stroke: color-mix(in srgb, var(--yellow) 45%, var(--border-strong)); stroke-width: 1.5; }
+.dit .d-blk { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.6; }
+.dit .d-enc { stroke: var(--blue); }
+.dit .d-dec { stroke: var(--yellow); }
+.dit .d-sparse { stroke-dasharray: 5 3.5; }
+.dit .d-occ { fill: color-mix(in srgb, var(--yellow) 18%, var(--surface)); stroke: var(--yellow); stroke-width: 1.6; }
+.dit .d-res { font-size: 12px; fill: var(--text-muted); }
+.dit .d-occ-text { fill: var(--text); font-weight: 600; }
+.dit .d-op { font-family: var(--font-serif); font-style: italic; font-size: 14px; fill: var(--text-muted); }
+.dit .d-op-onl { paint-order: stroke; stroke: var(--bg-raise); stroke-width: 7px; stroke-linejoin: round; }
+.dit .d-bell { fill: color-mix(in srgb, var(--teal) 25%, transparent); stroke: var(--teal); stroke-width: 1.5; }
+.dit .d-loss { fill: none; stroke: var(--text-faint); stroke-width: 1.5; stroke-dasharray: 5 4; stroke-linejoin: round; }
+.dit .d-head-loss { fill: var(--text-faint); }
+.dit .d-loss-label { font-size: 14px; fill: var(--text-muted); }
+.dit .d-teal-text { fill: var(--teal); }
+.dit .d-legend-blk { stroke: var(--text-muted); }
 .dit .d-badge { fill: var(--surface); stroke-width: 1.5; }
 .dit .d-badge-blue { stroke: var(--blue); }
 .dit .d-badge-green { stroke: var(--green); }

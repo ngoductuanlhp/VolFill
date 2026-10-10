@@ -47,6 +47,8 @@
   --green: #83C167;
   --purple: #9A72AC;
   --occluded: #6E8FC4;
+  --hot: #EE9A45;          /* paper's 'trained' flame */
+  --visible: #A0805C;      /* photo-colour stand-in for 'visible' in legends */
 
   --accent: var(--blue);
   --ours: var(--yellow);
@@ -79,6 +81,8 @@
   --green: #3F7A26;
   --purple: #6D4C7D;
   --occluded: #4F6FA6;
+  --hot: #C46A12;
+  --visible: #8A6A4A;
 
   --ours-text: #7D5C07;
 

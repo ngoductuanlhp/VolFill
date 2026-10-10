@@ -35,6 +35,9 @@ figures/opt/                WebP figures at 800/1600/2400 (scripts/optimize_imag
 figures/logo/               Blender/Cycles logo + favicons (scripts/logo/)
 media/anim/                 s1..s3 x {dark,light} x {webm,mp4,jpg poster} + manifest.json (Problem, TUDF, VAE)
 media/widgets/              widget data (scripts/export_widget_data.py)
+media/{dit,vae}-*.webp      insets of the generation / VAE SVG diagrams (index.html), which mirror Figs. 3 / 2 of
+                            the paper: same NRGB-D kitchen/001435 renders, visible = photo colour, hidden = --occluded.
+                            Exported from the paper workspace (paper_figs/arch/render_assets.py); keep them in sync
 animations/                 Manim sources (not loaded by the page): palette.py, common.py, scenes/*.py, render.sh
 scripts/screenshot.py       Playwright verification harness (screenshots + smoke checks)
 scripts/serve.py            local preview server with HTTP Range support (also used by the harness)
@@ -76,7 +79,7 @@ python scripts/export_widget_data.py flow --traj_dir <run>/out/<scene>/<frame> -
 ```
 W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evaluation.eval_latent_flow_visible --mode inference_all_steps ...` (see `scripts/infer/infer_traj_webpage.sbatch` there). It writes `step_XXX/pred_tudf_256.npz` per Euler step. List the exported scenes in `media/widgets/flow/index.json`. The code integrates t from 1 → 0; the page shows the paper's convention (0 = noise, 1 = data).
 
-**Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. **Logo:** `scripts/logo/render_logo.py` (Blender) + `scripts/logo/make_assets.sh`.
+**Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. `figures/architecture_{vae,dit}.png` are 2400-px renders of the paper's Fig. 2 / Fig. 3 PDFs (opened by the "Paper figure" links). **Logo:** `scripts/logo/render_logo.py` (Blender) + `scripts/logo/make_assets.sh`.
 
 **Verify before pushing:**
 ```bash

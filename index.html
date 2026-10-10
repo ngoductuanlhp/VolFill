@@ -269,10 +269,79 @@
       <button type="button">Encode</button><button type="button">Dense ↑ 64³</button><button type="button">Sparse ↑ 256³</button>
     </figcaption>
   </figure>
-  <div class="wrap-read fig-actions">
-    <button class="btn btn-ghost" type="button" data-lightbox="figures/opt/architecture_vae-2400.webp" data-caption="Hybrid 3D VAE architecture (paper figure).">
-      <svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg>Paper figure
-    </button>
+  <div class="wrap-wide">
+    <figure class="dit-fig vae-fig" aria-labelledby="vae-cap">
+      <div class="dit-scroll">
+        <svg class="dit" viewBox="-6 4 1132 316" role="img" aria-labelledby="vae-svg-title vae-svg-desc">
+          <title id="vae-svg-title">Hybrid 3D VAE</title>
+          <desc id="vae-svg-desc">Mirrors Figure 2 of the paper. The ground-truth 256 cubed TUDF goes through a sparse encoder (256, 128, 64, 32 cubed) and is densified into a 16 cubed latent z, regularised by a KL term. The decoder samples z, upsamples densely to 32 and 64 cubed, predicts occupancy, sparsifies, and upsamples sparsely to 128 and 256 cubed to give the reconstruction. Losses: BCE plus Dice on occupancy against the downsampled ground truth, and L1 on the reconstruction. Dashed blocks are sparse, solid blocks dense; visible surfaces keep the photo colour and hidden ones are blue.</desc>
+          <defs>
+            <marker id="vae-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" class="d-head"/>
+            </marker>
+            <marker id="vae-arrow-loss" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" class="d-head-loss"/>
+            </marker>
+          </defs>
+
+          <!-- input -->
+          <image href="media/vae-gt.webp" x="0" y="36.5" width="172" height="135" preserveAspectRatio="xMidYMid meet"/>
+          <text x="86" y="28" class="d-sub d-blue-text" text-anchor="middle">ground truth <tspan class="d-math">V</tspan><tspan class="d-subs" dy="4">gt</tspan></text>
+
+          <!-- encoder: sparse blocks -->
+          <rect x="192" y="12" width="200" height="212" rx="16" class="d-panel-enc"/>
+          <path d="M172 104 H201" class="d-line" marker-end="url(#vae-arrow)"/>
+          <rect x="205.6" y="32.0" width="33.6" height="144.0" rx="7" class="d-blk d-enc d-sparse"/><text class="d-res" transform="translate(222.4 104.0) rotate(-90)" text-anchor="middle" dy="4.5">256³</text>
+          <rect x="252.0" y="46.0" width="33.6" height="116.0" rx="7" class="d-blk d-enc d-sparse"/><text class="d-res" transform="translate(268.8 104.0) rotate(-90)" text-anchor="middle" dy="4.5">128³</text>
+          <rect x="298.4" y="60.0" width="33.6" height="88.0" rx="7" class="d-blk d-enc d-sparse"/><text class="d-res" transform="translate(315.2 104.0) rotate(-90)" text-anchor="middle" dy="4.5">64³</text>
+          <rect x="344.8" y="72.0" width="33.6" height="64.0" rx="7" class="d-blk d-enc d-sparse"/><text class="d-res" transform="translate(361.6 104.0) rotate(-90)" text-anchor="middle" dy="4.5">32³</text>
+          <text x="292" y="211" class="d-label" text-anchor="middle">Encoder</text>
+
+          <!-- latent + KL -->
+          <path d="M378.4 104 H456" class="d-line" marker-end="url(#vae-arrow)"/>
+          <text x="420" y="94" class="d-op" text-anchor="middle">densify</text>
+          <image href="media/vae-latent.webp" x="460" y="70" width="68" height="68"/>
+          <text x="494" y="60" class="d-sub d-teal-text" text-anchor="middle">latent <tspan class="d-math">z</tspan></text>
+          <path d="M460.4 177.6 L462.1 177.6 L463.8 177.6 L465.4 177.6 L467.1 177.5 L468.8 177.4 L470.5 177.3 L472.2 177.0 L473.8 176.5 L475.5 175.8 L477.2 174.7 L478.9 173.2 L480.6 171.2 L482.2 168.6 L483.9 165.5 L485.6 162.1 L487.3 158.6 L489.0 155.4 L490.6 152.7 L492.3 151.0 L494.0 150.4 L495.7 151.0 L497.4 152.7 L499.0 155.4 L500.7 158.6 L502.4 162.1 L504.1 165.5 L505.8 168.6 L507.4 171.2 L509.1 173.2 L510.8 174.7 L512.5 175.8 L514.2 176.5 L515.8 177.0 L517.5 177.3 L519.2 177.4 L520.9 177.5 L522.6 177.6 L524.2 177.6 L525.9 177.6 L527.6 177.6 Z" class="d-bell"/>
+          <text x="494" y="212" class="d-loss-label" text-anchor="middle"><tspan class="d-math">ℒ</tspan><tspan class="d-subs" dy="4">KL</tspan></text>
+
+          <!-- decoder: dense -> occupancy head -> sparse -->
+          <rect x="593.6" y="12" width="322.4" height="212" rx="16" class="d-panel-dec"/>
+          <rect x="608.0" y="72.0" width="33.6" height="64.0" rx="7" class="d-blk d-dec"/><text class="d-res" transform="translate(624.8 104.0) rotate(-90)" text-anchor="middle" dy="4.5">32³</text>
+          <rect x="654.4" y="60.0" width="33.6" height="88.0" rx="7" class="d-blk d-dec"/><text class="d-res" transform="translate(671.2 104.0) rotate(-90)" text-anchor="middle" dy="4.5">64³</text>
+          <rect x="823.2" y="46.0" width="33.6" height="116.0" rx="7" class="d-blk d-dec d-sparse"/><text class="d-res" transform="translate(840.0 104.0) rotate(-90)" text-anchor="middle" dy="4.5">128³</text>
+          <rect x="869.6" y="32.0" width="33.6" height="144.0" rx="7" class="d-blk d-dec d-sparse"/><text class="d-res" transform="translate(886.4 104.0) rotate(-90)" text-anchor="middle" dy="4.5">256³</text>
+          <rect x="698" y="52" width="44" height="104" rx="7" class="d-occ"/>
+          <text class="d-res d-occ-text" transform="translate(720 104) rotate(-90)" text-anchor="middle"><tspan x="0" dy="-2">occupancy</tspan><tspan x="0" dy="15">head</tspan></text>
+          <text x="908" y="211" class="d-label" text-anchor="end">Decoder</text>
+          <path d="M528 104 H604" class="d-line" marker-end="url(#vae-arrow)"/>
+          <text x="558" y="94" class="d-op" text-anchor="middle">sample</text>
+          <path d="M742 104 H819" class="d-line" marker-end="url(#vae-arrow)"/>
+          <text x="781" y="94" class="d-op" text-anchor="middle">sparsify</text>
+
+          <!-- output -->
+          <path d="M903.2 104 H944" class="d-line" marker-end="url(#vae-arrow)"/>
+          <image href="media/vae-recon.webp" x="948" y="36.5" width="172" height="135" preserveAspectRatio="xMidYMid meet"/>
+          <text x="1034" y="28" class="d-sub d-ours-text" text-anchor="middle">reconstruction <tspan class="d-math">V̂</tspan></text>
+
+          <!-- losses: one column under the latent -->
+          <path d="M86 172 V240 H440" class="d-loss" marker-end="url(#vae-arrow-loss)"/>
+          <path d="M86 240 V270 H476" class="d-loss" marker-end="url(#vae-arrow-loss)"/>
+          <path d="M720 156 V240 H548" class="d-loss" marker-end="url(#vae-arrow-loss)"/>
+          <path d="M1034 172 V270 H512" class="d-loss" marker-end="url(#vae-arrow-loss)"/>
+          <text x="262" y="244" class="d-op d-op-onl" text-anchor="middle">downsample</text>
+          <text x="494" y="245" class="d-loss-label" text-anchor="middle">BCE + Dice</text>
+          <text x="494" y="275" class="d-loss-label" text-anchor="middle"><tspan class="d-math">ℒ</tspan><tspan class="d-subs" dy="4">1</tspan></text>
+
+          <!-- legend: one row along the bottom, as in the paper -->
+          <rect x="4" y="296" width="18" height="18" rx="4" class="d-blk d-sparse d-legend-blk"/><text x="30" y="310" class="d-sub">sparse block</text>
+          <rect x="140" y="296" width="18" height="18" rx="4" class="d-blk d-legend-blk"/><text x="166" y="310" class="d-sub">dense block</text>
+          <circle cx="278" cy="305" r="6" class="d-dot-visible"/><text x="290" y="310" class="d-sub">visible</text>
+          <circle cx="362" cy="305" r="6" class="d-dot-hidden"/><text x="374" y="310" class="d-sub">hidden</text>
+        </svg>
+      </div>
+      <figcaption id="vae-cap" class="caption">The same encoder, latent and decoder as above, drawn as in Figure 2 of the paper (NRGB-D kitchen; the reconstruction is the real VAE output, 93.5% surface IoU). <button type="button" class="link-btn" data-lightbox="figures/opt/architecture_vae-2400.webp" data-caption="Hybrid 3D VAE architecture (paper figure).">Paper figure</button></figcaption>
+    </figure>
   </div>
 </section>
 
@@ -290,9 +359,9 @@
   <div class="wrap-wide">
     <figure class="dit-fig" aria-labelledby="dit-cap">
       <div class="dit-scroll">
-        <svg class="dit" viewBox="0 0 1120 380" role="img" aria-labelledby="dit-title dit-desc">
+        <svg class="dit" viewBox="-14 -4 1136 360" role="img" aria-labelledby="dit-title dit-desc">
           <title id="dit-title">VolFill generation pipeline</title>
-          <desc id="dit-desc">The input image goes to a frozen MoGe-2. Path 1: its image tokens enter every block of the denoising transformer through cross-attention. Path 2: its visible geometry, converted to a TUDF, is encoded by the frozen VAE encoder into a visible latent, passed through a zero-initialised MLP and added to the noisy latent. The transformer runs for 50 steps; the frozen VAE decoder turns the final latent into the amodal 3D output. A snowflake marks frozen modules.</desc>
+          <desc id="dit-desc">Mirrors Figure 3 of the paper. The input image goes to a frozen MoGe-2. Path 1: its image tokens enter every block of the denoising transformer through cross-attention. Path 2: its visible geometry is encoded by the frozen VAE encoder into a visible latent, passed through a zero-initialised MLP and added to the noisy latent. The trained transformer runs for 50 steps; the frozen VAE decoder turns the final latent into the amodal output, where visible surfaces keep the photo colour and hidden ones are blue. Snowflakes mark frozen modules, flames trained ones.</desc>
           <defs>
             <marker id="dit-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" class="d-head"/>
@@ -305,92 +374,106 @@
             </marker>
             <!-- Font Awesome Free 6.5.2 "snowflake" (regular), CC BY 4.0, https://fontawesome.com/license/free; same glyph as the paper figure -->
             <symbol id="dit-snow" viewBox="0 0 448 512"><path fill="currentColor" d="M224 0c13.3 0 24 10.7 24 24V70.1l23-23c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-57 57v76.5l66.2-38.2 20.9-77.8c3.4-12.8 16.6-20.4 29.4-17s20.4 16.6 17 29.4L373 142.2l37.1-21.4c11.5-6.6 26.2-2.7 32.8 8.8s2.7 26.2-8.8 32.8L397 183.8l31.5 8.4c12.8 3.4 20.4 16.6 17 29.4s-16.6 20.4-29.4 17l-77.8-20.9L272 256l66.2 38.2 77.8-20.9c12.8-3.4 26 4.2 29.4 17s-4.2 26-17 29.4L397 328.2l37.1 21.4c11.5 6.6 15.4 21.3 8.8 32.8s-21.3 15.4-32.8 8.8L373 369.8l8.4 31.5c3.4 12.8-4.2 26-17 29.4s-26-4.2-29.4-17l-20.9-77.8L248 297.6v76.5l57 57c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-23-23V488c0 13.3-10.7 24-24 24s-24-10.7-24-24V441.9l-23 23c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l57-57V297.6l-66.2 38.2-20.9 77.8c-3.4 12.8-16.6 20.4-29.4 17s-20.4-16.6-17-29.4L75 369.8 37.9 391.2c-11.5 6.6-26.2 2.7-32.8-8.8s-2.7-26.2 8.8-32.8L51 328.2l-31.5-8.4c-12.8-3.4-20.4-16.6-17-29.4s16.6-20.4 29.4-17l77.8 20.9L176 256l-66.2-38.2L31.9 238.6c-12.8 3.4-26-4.2-29.4-17s4.2-26 17-29.4L51 183.8 13.9 162.4c-11.5-6.6-15.4-21.3-8.8-32.8s21.3-15.4 32.8-8.8L75 142.2l-8.4-31.5c-3.4-12.8 4.2-26 17-29.4s26 4.2 29.4 17l20.9 77.8L200 214.4V137.9L143 81c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l23 23V24c0-13.3 10.7-24 24-24z"/></symbol>
-            <clipPath id="dit-clip-in"><rect x="20" y="52" width="140" height="110" rx="10"/></clipPath>
+            <!-- Font Awesome Free 5 "fire" (solid), CC BY 4.0, https://fontawesome.com/license/free; the paper's \faFire -->
+            <symbol id="dit-fire" viewBox="0 0 750 1000"><path fill="currentColor" d="M422 47.0413353346745C422 1.0413353346744998 362 -17.9586646653255 336 21.0413353346745C94 375.0413353346745 438 391.0413353346745 438 563.0413353346745C438 633.0413353346745 381 688.0413353346745 311 687.0413353346745C242 686.0413353346745 188 630.0413353346745 188 561.0413353346745V394.0413353346745C188 352.0413353346745 136 330.0413353346745 107 361.0413353346745C55 416.0413353346745 0 510.0413353346745 0 625.0413353346745C0 832.0413353346745 168 1000.0413353346745 375 1000.0413353346745C582 1000.0413353346745 750 832.0413353346745 750 625.0413353346745C750 292.0413353346745 422 248.0413353346745 422 47.0413353346745Z"/></symbol>
+            <clipPath id="dit-clip-in"><rect x="0" y="9" width="147" height="110" rx="8"/></clipPath>
           </defs>
 
           <!-- input -->
-          <image href="models/nrgbd_breakfast_room_000000/input.jpg" x="20" y="52" width="140" height="110" preserveAspectRatio="xMidYMid slice" clip-path="url(#dit-clip-in)"/>
-          <rect x="20" y="52" width="140" height="110" rx="10" class="d-frame"/>
-          <text x="90" y="186" class="d-sub" text-anchor="middle">input image</text>
+          <image href="models/nrgbd_kitchen_001435/input.jpg" x="0" y="9" width="147" height="110" preserveAspectRatio="xMidYMid slice" clip-path="url(#dit-clip-in)"/>
+          <rect x="0" y="9" width="147" height="110" rx="8" class="d-frame"/>
+          <text x="73.5" y="138" class="d-sub" text-anchor="middle">input image</text>
 
-          <!-- MoGe-2 -->
-          <path d="M160 107 H196" class="d-line" marker-end="url(#dit-arrow)"/>
-          <rect x="200" y="79" width="130" height="56" rx="12" class="d-box"/>
-          <text x="265" y="112" class="d-label" text-anchor="middle">MoGe-2</text>
-          <circle cx="330" cy="79" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="323.5" y="71.5" width="13" height="15"/>
+          <!-- MoGe-2 (frozen) -->
+          <path d="M147 52 H168" class="d-line" marker-end="url(#dit-arrow)"/>
+          <rect x="172" y="24" width="92" height="56" rx="12" class="d-box"/>
+          <text x="218" y="57" class="d-label" text-anchor="middle">MoGe-2</text>
+          <circle cx="264" cy="24" r="11" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="258" y="17" width="12" height="14"/>
 
-          <!-- path 1: image tokens -> cross-attention -->
+          <!-- transformer panel first, so the arrows entering it stay on top -->
+          <rect x="676" y="70" width="254" height="178" rx="16" class="d-panel"/>
+          <circle cx="930" cy="70" r="11" class="d-snow-bg"/><use class="d-fire" href="#dit-fire" x="925" y="63" width="10.5" height="14"/>
+
+          <!-- path 1: image tokens -> cross-attention into every block -->
           <g class="p-tokens">
-            <path d="M330 107 H372" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M264 52 H285" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
             <g class="d-tokens">
-              <rect x="378" y="96" width="20" height="22" rx="4"/><rect x="402" y="96" width="20" height="22" rx="4"/>
-              <rect x="426" y="96" width="20" height="22" rx="4"/><rect x="450" y="96" width="20" height="22" rx="4"/>
+              <rect x="289" y="39" width="18" height="26" rx="4"/><rect x="311" y="39" width="18" height="26" rx="4"/>
+              <rect x="333" y="39" width="18" height="26" rx="4"/><rect x="355" y="39" width="18" height="26" rx="4"/>
+              <rect x="377" y="39" width="18" height="26" rx="4"/>
             </g>
-            <text x="424" y="84" class="d-sub d-blue-text" text-anchor="middle">image tokens</text>
-            <path d="M470 107 H510 V64 H740" class="d-line d-blue"/>
-            <path d="M610 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
-            <path d="M690 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
-            <path d="M780 64 V86" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
-            <path d="M740 64 H780" class="d-line d-blue"/>
-            <text x="560" y="54" class="d-tag d-blue-text">cross-attention</text>
-            <circle cx="510" cy="134" r="11" class="d-badge d-badge-blue"/><text x="510" y="138.5" class="d-badge-text" text-anchor="middle">1</text>
+            <text x="342" y="29" class="d-sub d-blue-text" text-anchor="middle">image tokens</text>
+            <path d="M395 52 H887 V92" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M718 52 V92" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <path d="M781 52 V92" class="d-line d-blue" marker-end="url(#dit-arrow-blue)"/>
+            <text x="706" y="44" class="d-tag d-blue-text" text-anchor="end">cross-attention</text>
+            <circle cx="452" cy="52" r="11" class="d-badge d-badge-blue"/><text x="452" y="56.5" class="d-badge-text" text-anchor="middle">1</text>
           </g>
 
-          <!-- denoising transformer -->
-          <rect x="560" y="76" width="270" height="116" rx="16" class="d-group"/>
-          <rect x="576" y="90" width="68" height="62" rx="10" class="d-box"/>
-          <text x="610" y="118" class="d-small" text-anchor="middle">DiT</text><text x="610" y="134" class="d-small" text-anchor="middle">block</text>
-          <rect x="656" y="90" width="68" height="62" rx="10" class="d-box"/>
-          <text x="690" y="118" class="d-small" text-anchor="middle">DiT</text><text x="690" y="134" class="d-small" text-anchor="middle">block</text>
-          <text x="735" y="125" class="d-sub" text-anchor="middle">···</text>
-          <rect x="746" y="90" width="68" height="62" rx="10" class="d-box"/>
-          <text x="780" y="118" class="d-small" text-anchor="middle">DiT</text><text x="780" y="134" class="d-small" text-anchor="middle">block</text>
-          <text x="695" y="178" class="d-sub" text-anchor="middle">denoising transformer <tspan class="d-math">Φ</tspan></text>
-          <text x="826" y="212" class="d-tag" text-anchor="end">× 50 steps</text>
-
-          <!-- path 2: visible geometry -> z_vis -> MLP_0 -> + -->
+          <!-- path 2: visible geometry -> Encoder -> z_vis -> MLP_zero -> (+) -->
           <g class="p-visible">
-            <path d="M265 135 V226" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <image href="media/dit-visible.webp" x="190" y="232" width="150" height="112" preserveAspectRatio="xMidYMid meet"/>
-            <text x="265" y="362" class="d-sub d-green-text" text-anchor="middle">visible geometry</text>
-            <path d="M342 290 H366" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <rect x="370" y="262" width="92" height="56" rx="12" class="d-box"/>
-            <text x="416" y="296" class="d-label" text-anchor="middle">Encoder</text>
-            <circle cx="462" cy="262" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="455.5" y="254.5" width="13" height="15"/>
-            <path d="M462 290 H492" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <g class="d-latent">
-              <rect x="497" y="272" width="11" height="11" rx="2"/><rect x="511" y="272" width="11" height="11" rx="2"/><rect x="525" y="272" width="11" height="11" rx="2"/>
-              <rect x="497" y="286" width="11" height="11" rx="2"/><rect x="511" y="286" width="11" height="11" rx="2"/><rect x="525" y="286" width="11" height="11" rx="2"/>
-              <rect x="497" y="300" width="11" height="11" rx="2"/><rect x="511" y="300" width="11" height="11" rx="2"/><rect x="525" y="300" width="11" height="11" rx="2"/>
-            </g>
-            <text x="517" y="336" class="d-sub d-green-text d-math" text-anchor="middle">z<tspan class="d-subs" dy="4">vis</tspan></text>
-            <path d="M536 290 H578" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <rect x="582" y="266" width="76" height="48" rx="12" class="d-box"/>
-            <text x="620" y="295" class="d-label" text-anchor="middle">MLP<tspan class="d-subs" dy="4">0</tspan></text>
-            <path d="M658 290 H676" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
-            <circle cx="510" cy="232" r="11" class="d-badge d-badge-green"/><text x="510" y="236.5" class="d-badge-text" text-anchor="middle">2</text>
+            <path d="M218 80 V126" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <circle cx="240" cy="104" r="11" class="d-badge d-badge-green"/><text x="240" y="108.5" class="d-badge-text" text-anchor="middle">2</text>
+            <!-- V_vis shares V_pred's camera and crop (same scale), so its points fill only part of the frame -->
+            <image href="media/dit-visible.webp" x="147" y="124" width="172" height="150" preserveAspectRatio="xMidYMid meet"/>
+            <text x="218" y="258" class="d-sub d-green-text" text-anchor="middle">visible geometry</text>
+            <path d="M264 232 H336" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <rect x="340" y="208" width="92" height="48" rx="12" class="d-box"/>
+            <text x="386" y="237" class="d-label" text-anchor="middle">Encoder</text>
+            <circle cx="432" cy="208" r="11" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="426" y="201" width="12" height="14"/>
+            <path d="M432 232 H466" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <image href="media/dit-zvis.webp" x="470" y="198" width="68" height="68"/>
+            <text x="504" y="288" class="d-sub d-green-text" text-anchor="middle">visible latent <tspan class="d-math">z</tspan><tspan class="d-subs" dy="4">vis</tspan></text>
+            <path d="M538 232 H564" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
+            <rect x="568" y="208" width="80" height="48" rx="12" class="d-box d-trn"/>
+            <text x="608" y="237" class="d-label" text-anchor="middle">MLP<tspan class="d-subs" dy="4">zero</tspan></text>
+            <circle cx="648" cy="208" r="11" class="d-snow-bg"/><use class="d-fire" href="#dit-fire" x="643" y="201" width="10.5" height="14"/>
+            <path d="M608 208 V165" class="d-line d-green" marker-end="url(#dit-arrow-green)"/>
           </g>
-          <circle cx="695" cy="290" r="15" class="d-plus"/>
-          <path d="M687 290 H703 M695 282 V298" class="d-line"/>
-          <path d="M695 275 V196" class="d-line" marker-end="url(#dit-arrow)"/>
-          <path d="M790 290 H714" class="d-line" marker-end="url(#dit-arrow)"/>
-          <text x="800" y="286" class="d-sub">noisy latent <tspan class="d-math">z</tspan><tspan class="d-subs d-math" dy="4">t</tspan></text>
 
-          <!-- legend -->
-          <use class="d-snow" href="#dit-snow" x="20" y="353" width="14" height="16"/>
-          <text x="42" y="366" class="d-sub">frozen</text>
+          <!-- noisy latent and the additive fusion -->
+          <image href="media/dit-zt.webp" x="470" y="114" width="68" height="68"/>
+          <text x="464" y="153" class="d-sub" text-anchor="end">noisy latent <tspan class="d-math">z</tspan><tspan class="d-subs" dy="4">t</tspan></text>
+          <path d="M538 148 H591" class="d-line" marker-end="url(#dit-arrow)"/>
+          <circle cx="608" cy="148" r="13" class="d-plus"/>
+          <path d="M601 148 H615 M608 141 V155" class="d-line"/>
+          <path d="M621 148 H687" class="d-line" marker-end="url(#dit-arrow)"/>
+          <text x="652" y="139" class="d-sub d-math" text-anchor="middle">z̃<tspan class="d-subs" dy="4">t</tspan></text>
 
-          <!-- decode -->
-          <path d="M830 134 H884" class="d-line" marker-end="url(#dit-arrow)"/>
-          <rect x="888" y="106" width="92" height="56" rx="12" class="d-box"/>
-          <text x="934" y="140" class="d-label" text-anchor="middle">Decoder</text>
-          <circle cx="980" cy="106" r="12" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="973.5" y="98.5" width="13" height="15"/>
-          <path d="M980 134 H1010 V196" class="d-line" marker-end="url(#dit-arrow)"/>
-          <image href="media/dit-output.webp" x="918" y="184" width="196" height="147" preserveAspectRatio="xMidYMid meet"/>
-          <text x="1016" y="346" class="d-sub d-ours-text" text-anchor="middle">amodal 3D output</text>
+          <!-- denoising transformer (trained) -->
+          <rect x="691" y="96" width="54" height="104" rx="10" class="d-box"/>
+          <text x="718" y="144" class="d-small" text-anchor="middle">DiT</text><text x="718" y="160" class="d-small" text-anchor="middle">block</text>
+          <rect x="754" y="96" width="54" height="104" rx="10" class="d-box"/>
+          <text x="781" y="144" class="d-small" text-anchor="middle">DiT</text><text x="781" y="160" class="d-small" text-anchor="middle">block</text>
+          <text x="833" y="152" class="d-sub" text-anchor="middle">···</text>
+          <rect x="860" y="96" width="54" height="104" rx="10" class="d-box"/>
+          <text x="887" y="144" class="d-small" text-anchor="middle">DiT</text><text x="887" y="160" class="d-small" text-anchor="middle">block</text>
+          <text x="803" y="230" class="d-sub" text-anchor="middle">denoising transformer <tspan class="d-math">Φ</tspan></text>
+          <path d="M803 270 V252" class="d-line" marker-end="url(#dit-arrow)"/>
+          <text x="803" y="288" class="d-sub" text-anchor="middle">timestep <tspan class="d-math">t</tspan></text>
+          <text x="930" y="288" class="d-tag" text-anchor="end">× 50 steps</text>
+
+          <!-- decode (frozen) -->
+          <path d="M914 124 H970" class="d-line" marker-end="url(#dit-arrow)"/>
+          <rect x="974" y="100" width="92" height="48" rx="12" class="d-box"/>
+          <text x="1020" y="129" class="d-label" text-anchor="middle">Decoder</text>
+          <circle cx="1066" cy="100" r="11" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="1060" y="93" width="12" height="14"/>
+          <path d="M1020 148 V168" class="d-line" marker-end="url(#dit-arrow)"/>
+          <image href="media/dit-output.webp" x="936" y="172" width="172" height="150" preserveAspectRatio="xMidYMid meet"/>
+          <text x="1022" y="340" class="d-sub d-ours-text" text-anchor="middle">amodal 3D output</text>
+
+          <!-- legend: one row along the bottom, as in the paper -->
+          <g class="d-legend">
+            <circle cx="11" cy="335" r="10" class="d-snow-bg"/><use class="d-snow" href="#dit-snow" x="5.5" y="328.5" width="11" height="13"/>
+            <text x="28" y="340" class="d-sub">frozen</text>
+            <circle cx="102" cy="335" r="10" class="d-snow-bg"/><use class="d-fire" href="#dit-fire" x="97.5" y="328.5" width="9.5" height="13"/>
+            <text x="119" y="340" class="d-sub">trained</text>
+            <circle cx="198" cy="335" r="6" class="d-dot-visible"/><text x="210" y="340" class="d-sub">visible</text>
+            <circle cx="282" cy="335" r="6" class="d-dot-hidden"/><text x="294" y="340" class="d-sub">hidden</text>
+          </g>
         </svg>
       </div>
-      <figcaption id="dit-cap" class="caption">Trained on 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples). <button type="button" class="link-btn" data-lightbox="figures/opt/architecture_dit-1600.webp" data-caption="Latent DiT with dual conditioning (paper figure).">Paper figure</button></figcaption>
+      <figcaption id="dit-cap" class="caption">Trained on 3D-FRONT (96k image–TUDF pairs) and ScanNet++ (46k samples). <button type="button" class="link-btn" data-lightbox="figures/opt/architecture_dit-2400.webp" data-caption="Latent DiT with dual conditioning (paper figure).">Paper figure</button></figcaption>
     </figure>
 
     <figure class="widget" id="widget-flow" data-widget="flow">
