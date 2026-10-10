@@ -28,11 +28,14 @@ js/viewers/compare.js       baseline-vs-ours viewer with camera sync; holds the 
 js/chart.js                 SVG bar chart (occluded APD / complete FS); numbers inline, mirror Tables 1-2
 js/anim-player.js           inline Manim videos: loop while >=50% visible, pause off-screen; beat chips under
                             each clip highlight the current beat and seek to it (marks from media/anim/manifest.json)
+js/hero-anim.js             hero logo loop: picks media/logo-anim.mov (WebKit: HEVC+alpha) or .webm (VP9+alpha) by
+                            engine, attaches it on idle while on screen; reduced motion keeps the poster
 js/widgets/tudf-slider.js   W1: tau/eps slider over media/widgets/tudf-slice.{png,json}
 js/widgets/flow-scrubber.js W2: t-slider over media/widgets/flow/<scene>/step_XX.webp (real Euler steps)
 fonts/                      self-hosted WOFF2: Inter, Newsreader (+italic), JetBrains Mono
 figures/opt/                WebP figures at 800/1600/2400 (scripts/optimize_images.py); originals stay in figures/
-figures/logo/               Blender/Cycles logo + favicons (scripts/logo/)
+figures/logo/               Cycles logo master (= frame 0 of the hero loop) + favicons (scripts/logo/make_assets.sh)
+media/logo-anim.*           hero logo loop, 840 px, transparent: .mov (HEVC+alpha), .webm (VP9+alpha), -poster.webp
 media/anim/                 s1..s3 x {dark,light} x {webm,mp4,jpg poster} + manifest.json (Problem, TUDF, VAE)
 media/widgets/              widget data (scripts/export_widget_data.py)
 media/{dit,vae}-*.webp      insets of the generation / VAE SVG diagrams (index.html), which mirror Figs. 3 / 2 of
@@ -85,7 +88,7 @@ python scripts/export_widget_data.py vae --gt gt_tudf_256.npz --recon recon_tudf
 VolFill grids are indexed `(z, y, x)` while `bbox_min/max` are `(x, y, z)`; `tudf_to_points` handles this (before Oct 2026 it swapped x and z, so the W2 frames showed transposed scenes). W2 frames use the same paper colouring as the GLBs. S3 reads `media/widgets/vae-slice-{gt,recon,occ}.png` + `vae-slice.json`: one gravity-aligned slice through the real VAE stages of NRGB-D kitchen/001435 (GT TUDF, decoder 64³ occupancy, reconstruction), produced with the paper VAE in the paper workspace (`paper_figs/arch/_cache/`).
 W2 needs a denoising trajectory from `VolFill_private`: `python -m volfill.evaluation.eval_latent_flow_visible --mode inference_all_steps ...` (see `scripts/infer/infer_traj_webpage.sbatch` there). It writes `step_XXX/pred_tudf_256.npz` per Euler step. List the exported scenes in `media/widgets/flow/index.json`. The code integrates t from 1 → 0; the page shows the paper's convention (0 = noise, 1 = data).
 
-**Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. `figures/architecture_{vae,dit}.png` are 2400-px renders of the paper's Fig. 2 / Fig. 3 PDFs (opened by the "Paper figure" links). **Logo:** `scripts/logo/render_logo.py` (Blender) + `scripts/logo/make_assets.sh`.
+**Figures:** `python scripts/optimize_images.py` regenerates `figures/opt/*.webp`. `figures/architecture_{vae,dit}.png` are 2400-px renders of the paper's Fig. 2 / Fig. 3 PDFs (opened by the "Paper figure" links). **Logo + hero loop:** rendered with Blender/Cycles in the paper workspace (`paper_figs/logo_anim/`: `prep_scene.py` turns the NRGB-D kitchen/001435 GT TUDF into the scene mesh + voxels, `animate_logo.py` renders the loop, `encode.sh web` writes `media/logo-anim.*`). The static master `figures/logo/volfill_logo.png` is frame 0 at 2048 px (`--res 2048 --samples 512 --motion-blur 0 --times 0`); derive the rest with `scripts/logo/make_assets.sh` and `optimize_images.py`'s `build_logo()`. `scripts/logo/render_logo.py` renders the earlier designs (2³ slot, offset block; `figures/logo/alt/`).
 
 **Verify before pushing:**
 ```bash

@@ -103,8 +103,8 @@
   background: radial-gradient(circle, color-mix(in srgb, var(--yellow) 22%, transparent), transparent 70%);
   filter: blur(30px);
 }
-.hero-art img { width: 100%; height: auto; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.45)); }
-[data-theme="light"] .hero-art img { filter: drop-shadow(0 24px 30px rgba(30, 30, 50, 0.18)); }
+.hero-art video { display: block; width: 100%; height: auto; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.45)); }
+[data-theme="light"] .hero-art video { filter: drop-shadow(0 24px 30px rgba(30, 30, 50, 0.18)); }
 .venue-badge {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.3rem 0.8rem 0.3rem 0.65rem; border-radius: var(--r-pill);

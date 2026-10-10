@@ -1,7 +1,11 @@
-"""Render the VolFill logo with Cycles (transparent background).
+"""Render the earlier VolFill logo designs with Cycles (transparent background).
+
+The current master (3^3 hole, 2^3 block straight above its inner corner) is frame 0 of the hero loop,
+rendered by paper_figs/logo_anim/animate_logo.py in the paper workspace (see CLAUDE.md); this script
+keeps the earlier designs reproducible (figures/logo/alt/).
 
   /Applications/Blender.app/Contents/MacOS/Blender -b -P scripts/logo/render_logo.py -- \
-      --out figures/logo/volfill_logo.png --res 2048 --samples 512
+      --out figures/logo/alt/volfill_logo_insert.png --res 2048 --samples 512
 
 Variants
   insert  : (default) 5x5x5 rounded-voxel cube in a purple->blue->teal screen-space ramp.
