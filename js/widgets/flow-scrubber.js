@@ -80,16 +80,20 @@ export async function initFlowScrubber(root) {
   playBtn.addEventListener('click', () => (timer ? stop() : play()));
   range.addEventListener('input', () => { stop(); show(Number(range.value)); });
 
+  let sceneToken = 0;
   const setScene = async (name) => {
     stop();
+    const token = ++sceneToken;
     const meta = await fetch(`${ROOT}/${name}/flow.json`).then((r) => r.json());
+    if (token !== sceneToken) return;  // a later scene click won the race
     scene = { name, ...meta };
+    // Swap in this scene's frames before the first show(), or it would draw the previous scene's cached image.
+    images = scene.frames.map((f) => { const im = new Image(); im.src = `${ROOT}/${name}/${f.src}`; return im; });
     sceneSeg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.name === name)));
     inputImg.src = `${ROOT}/${name}/input.jpg`;
     range.max = String(scene.frames.length - 1);
     range.value = String(scene.frames.length - 1);
     show(scene.frames.length - 1);
-    images = scene.frames.map((f) => { const im = new Image(); im.src = `${ROOT}/${name}/${f.src}`; return im; });
     await Promise.allSettled(images.slice(0, 3).map((im) => im.decode?.()));
   };
 
