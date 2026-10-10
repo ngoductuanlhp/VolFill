@@ -160,6 +160,20 @@ def export_flow(args):
     assert steps, f"no step_* dirs in {traj}"
     final_meta = json.loads((steps[-1] / "metadata.json").read_text())
     final = tudf_to_points(np.load(steps[-1] / "pred_tudf_256.npz")["tudf"], final_meta, args.thr)
+    voxel = float(np.asarray(final_meta["extent_xyz"])[0]) / 256
+    # Paper-style framing: level the scene (floor horizontal) and cut away the ceiling band, both fitted on the
+    # final step and applied to every step so the frames stay aligned.
+    Rg = gravity_frame(final, voxel) if args.level else np.eye(3)
+    Qf = final @ Rg.T
+    floor = np.percentile(Qf[:, 1], 99.5)                               # +y is down
+    h_keep = np.percentile(floor - Qf[:, 1], 97) - args.ceiling_drop if args.ceiling_drop > 0 else np.inf
+
+    def place(pts):
+        q = pts @ Rg.T
+        return q, (floor - q[:, 1]) < h_keep
+
+    final, _m = place(final)
+    final = final[_m]
     y_lo, y_hi = np.percentile(final[:, 1], [0.5, 99.5])
     W, H = args.size
     basis = view_basis(args.yaw, args.elev)
@@ -183,7 +197,6 @@ def export_flow(args):
         else:
             K = _camera_K(traj, "", None, photo.shape[:2])          # pixel intrinsics from metadata.json
         assert K is not None, "--color visibility needs --intrinsics <moge.npz> (or intrinsics in metadata.json)"
-        voxel = float(np.asarray(final_meta["extent_xyz"])[0]) / 256
     keep = sorted(set(np.linspace(0, len(steps) - 1, min(args.frames, len(steps))).round().astype(int)))
     frames = []
     for k in keep:
@@ -193,10 +206,14 @@ def export_flow(args):
         if len(pts) > args.max_points:
             pts = pts[np.random.default_rng(0).choice(len(pts), args.max_points, replace=False)]
         if args.color == "visibility":
-            col = _visibility_colors(pts, photo, K, voxel)[:, :3] / 255.0
+            col = _visibility_colors(pts, photo, K, voxel)[:, :3] / 255.0   # in the camera frame
+        pts, m = place(pts)
+        pts = pts[m]
+        if args.color == "visibility":
+            col = col[m]
         else:
             col = plasma(1 - (pts[:, 1] - y_lo) / (y_hi - y_lo + 1e-8))  # +y down -> invert
-        img = render_points(pts, col, (W, H), basis, fit)
+        img = render_points(pts, col, (W, H), basis, fit, splat=args.splat)
         name = f"step_{k:02d}.webp"
         Image.fromarray(img, "RGBA").save(out / name, "WEBP", quality=82, method=6)
         # Code integrates t from 1 (noise) to 0; the page uses the paper's t (0 = noise, 1 = data).
@@ -314,8 +331,11 @@ def main():
     f.add_argument("--thr", type=float, default=1.0, help="TUDF threshold (voxels) for surface points")
     f.add_argument("--frames", type=int, default=50)
     f.add_argument("--size", type=int, nargs=2, default=[800, 600])
-    f.add_argument("--yaw", type=float, default=-30)
-    f.add_argument("--elev", type=float, default=38)
+    f.add_argument("--yaw", type=float, default=15, help="orbit around the input camera (paper renders: 15)")
+    f.add_argument("--elev", type=float, default=40, help="view elevation in degrees (paper renders: 40)")
+    f.add_argument("--splat", type=int, default=3, help="point splat size in pixels")
+    f.add_argument("--no_level", dest="level", action="store_false", help="don't level the floor (gravity frame)")
+    f.add_argument("--ceiling_drop", type=float, default=0.25, help="cut away the top band (metres); 0 = keep all")
     f.add_argument("--max_points", type=int, default=400_000)
     f.add_argument("--color", choices=["visibility", "height"], default="visibility",
                    help="visibility = paper colouring (photo / slate hidden); height = old plasma")
