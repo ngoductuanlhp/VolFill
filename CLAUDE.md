@@ -92,7 +92,7 @@ It checks for console errors, asset 404s, viewer loads and swaps, camera sync, t
 
 ## Non-obvious things
 
-- Pre-release metadata: BibTeX is an `@inproceedings` NeurIPS 2026 entry that keeps arXiv 2605.31466; update it when proceedings metadata exists.
+- BibTeX is the NeurIPS 2026 `@inproceedings` entry (title/authors as in the camera-ready). Add `volume`/`pages`/`publisher` once the official proceedings entry is online; arXiv 2605.31466 stays linked from the hero buttons.
 - `media/og-image.jpg` (1200×630) is the social preview referenced by the OG/Twitter tags.
 - Under `prefers-reduced-motion` the clips show native controls and nothing autoplays.
 - `media/teaser-poster.webp` is rendered from the first teaser GLB: `python scripts/export_widget_data.py poster --glb models/$(head -1 models/valid_samples_teaser.txt)/ours.glb`. Regenerate it if you reorder the teaser list.
