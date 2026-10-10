@@ -12,14 +12,15 @@ No build step, bundler or package manager: plain HTML, CSS (`@layer`), and vanil
 
 ```
 index.html                  semantic sections, no inline styles; KaTeX (CDN + SRI) renders $...$ math
-css/tokens.css              palette (dark default, [data-theme=light]), type scale, spacing, @font-face
+css/tokens.css              palette ([data-theme=dark|light]; the page defaults to light), type scale, spacing, @font-face
 css/base.css                reset + base + utilities (wrap-read 720px, wrap-wide 1200px, .reveal)
 css/components.css          above-the-fold components (buttons, topbar, hero, stage/viewers, stats); render-blocking
 css/sections.css            everything below the fold (chapters, animation figures, widgets, compare, tables, chart,
                             lightbox); loaded async via rel=preload so first paint isn't blocked
 js/main.js                  boot: theme, KaTeX, scroll-spy + progress, reveals, tabs, lightbox, BibTeX copy,
                             and lazy imports (IntersectionObserver) of the modules below
-js/theme.js                 data-theme on <html>, persisted in localStorage('volfill-theme'); fires 'themechange'
+js/theme.js                 data-theme on <html>: light unless the visitor toggled dark (only that choice is stored, in
+                            localStorage('volfill-theme-choice')); updates meta theme-color; fires 'themechange'
                             (an inline <head> script applies the stored theme before first paint)
 js/viewers/model-viewer.js  loads <model-viewer> 4.0.0 from CDN with SRI; carousel, loading bar, fullscreen helpers
 js/viewers/teaser.js        hero viewer: ours.glb for models/valid_samples_teaser.txt. Shows media/teaser-poster.webp

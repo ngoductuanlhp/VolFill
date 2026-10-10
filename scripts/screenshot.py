@@ -186,6 +186,10 @@ async def run(args):
                 print(f"== {size} {theme}", flush=True)
                 ctx = await browser.new_context(viewport={"width": vw, "height": vh}, device_scale_factor=scale,
                                                 color_scheme=theme, reduced_motion=args.reduced_motion)
+                # The page ignores the OS scheme (light unless the visitor chose dark), so seed the stored choice;
+                # only if unset, so the toggle-persists check below still sees the toggled value after reload.
+                await ctx.add_init_script("if (!localStorage.getItem('volfill-theme-choice')) "
+                                          f"localStorage.setItem('volfill-theme-choice', '{theme}')")
                 page = await ctx.new_page()
                 errors, bad = [], []
                 page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
@@ -230,7 +234,7 @@ async def run(args):
                     t0 = await page.evaluate("document.documentElement.dataset.theme")
                     await page.click("[data-theme-toggle]")
                     t1 = await page.evaluate("document.documentElement.dataset.theme")
-                    stored = await page.evaluate("localStorage.getItem('volfill-theme')")
+                    stored = await page.evaluate("localStorage.getItem('volfill-theme-choice')")
                     page2 = await ctx.new_page()
                     await page2.goto(base, wait_until="domcontentloaded")
                     t2 = await page2.evaluate("document.documentElement.dataset.theme")

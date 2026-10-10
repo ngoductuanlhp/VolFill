@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VolFill: Single-View Amodal 3D Scene Reconstruction with Volumetric Flow Matching</title>
   <meta name="description" content="VolFill recovers complete 3D scene geometry, including occluded surfaces, from a single RGB image, using a hybrid sparse–dense 3D VAE and a latent diffusion transformer trained with flow matching. NeurIPS 2026.">
   <link rel="canonical" href="https://ngoductuanlhp.github.io/VolFill/">
-  <meta name="theme-color" content="#0E1015" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#FAF9F6">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="VolFill">
@@ -28,12 +27,13 @@
 
   <script>
     (function () {
+      // Light unless the visitor picked dark with the toggle (js/theme.js stores only explicit choices).
       var t = null;
-      try { t = localStorage.getItem('volfill-theme'); } catch (e) {}
-      if (t !== 'dark' && t !== 'light') {
-        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      try { t = localStorage.getItem('volfill-theme-choice'); } catch (e) {}
+      if (t === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0E1015');
       }
-      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
 
@@ -95,7 +95,7 @@
       <a href="#ablations">Ablations</a>
       <a href="#bibtex">BibTeX</a>
     </nav>
-    <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme">
+    <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme">
       <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
       <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
     </button>
