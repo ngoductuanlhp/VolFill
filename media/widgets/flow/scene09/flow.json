@@ -5,301 +5,301 @@
    "src": "step_00.webp",
    "step": 1,
    "t": 0.02,
-   "points": 400000
+   "points": 339624
   },
   {
    "src": "step_01.webp",
    "step": 2,
    "t": 0.04,
-   "points": 400000
+   "points": 338549
   },
   {
    "src": "step_02.webp",
    "step": 3,
    "t": 0.06,
-   "points": 348265
+   "points": 280017
   },
   {
    "src": "step_03.webp",
    "step": 4,
    "t": 0.08,
-   "points": 298752
+   "points": 245541
   },
   {
    "src": "step_04.webp",
    "step": 5,
    "t": 0.1,
-   "points": 295349
+   "points": 242966
   },
   {
    "src": "step_05.webp",
    "step": 6,
    "t": 0.12,
-   "points": 298956
+   "points": 246691
   },
   {
    "src": "step_06.webp",
    "step": 7,
    "t": 0.14,
-   "points": 283381
+   "points": 234378
   },
   {
    "src": "step_07.webp",
    "step": 8,
    "t": 0.16,
-   "points": 270087
+   "points": 223300
   },
   {
    "src": "step_08.webp",
    "step": 9,
    "t": 0.18,
-   "points": 259533
+   "points": 214506
   },
   {
    "src": "step_09.webp",
    "step": 10,
    "t": 0.2,
-   "points": 250695
+   "points": 208489
   },
   {
    "src": "step_10.webp",
    "step": 11,
    "t": 0.22,
-   "points": 246198
+   "points": 205438
   },
   {
    "src": "step_11.webp",
    "step": 12,
    "t": 0.24,
-   "points": 243491
+   "points": 203721
   },
   {
    "src": "step_12.webp",
    "step": 13,
    "t": 0.26,
-   "points": 242427
+   "points": 203355
   },
   {
    "src": "step_13.webp",
    "step": 14,
    "t": 0.28,
-   "points": 241332
+   "points": 203128
   },
   {
    "src": "step_14.webp",
    "step": 15,
    "t": 0.3,
-   "points": 241915
+   "points": 204010
   },
   {
    "src": "step_15.webp",
    "step": 16,
    "t": 0.32,
-   "points": 242811
+   "points": 204824
   },
   {
    "src": "step_16.webp",
    "step": 17,
    "t": 0.34,
-   "points": 244285
+   "points": 206038
   },
   {
    "src": "step_17.webp",
    "step": 18,
    "t": 0.36,
-   "points": 245619
+   "points": 207045
   },
   {
    "src": "step_18.webp",
    "step": 19,
    "t": 0.38,
-   "points": 246379
+   "points": 207848
   },
   {
    "src": "step_19.webp",
    "step": 20,
    "t": 0.4,
-   "points": 247241
+   "points": 208674
   },
   {
    "src": "step_20.webp",
    "step": 21,
    "t": 0.42,
-   "points": 247220
+   "points": 208764
   },
   {
    "src": "step_21.webp",
    "step": 22,
    "t": 0.44,
-   "points": 247713
+   "points": 209156
   },
   {
    "src": "step_22.webp",
    "step": 23,
    "t": 0.46,
-   "points": 247749
+   "points": 209204
   },
   {
    "src": "step_23.webp",
    "step": 24,
    "t": 0.48,
-   "points": 248033
+   "points": 209394
   },
   {
    "src": "step_24.webp",
    "step": 25,
    "t": 0.5,
-   "points": 248163
+   "points": 209525
   },
   {
    "src": "step_25.webp",
    "step": 26,
    "t": 0.52,
-   "points": 248488
+   "points": 209802
   },
   {
    "src": "step_26.webp",
    "step": 27,
    "t": 0.54,
-   "points": 248681
+   "points": 210052
   },
   {
    "src": "step_27.webp",
    "step": 28,
    "t": 0.56,
-   "points": 248754
+   "points": 210133
   },
   {
    "src": "step_28.webp",
    "step": 29,
    "t": 0.58,
-   "points": 248846
+   "points": 210298
   },
   {
    "src": "step_29.webp",
    "step": 30,
    "t": 0.6,
-   "points": 249162
+   "points": 210680
   },
   {
    "src": "step_30.webp",
    "step": 31,
    "t": 0.62,
-   "points": 249761
+   "points": 211214
   },
   {
    "src": "step_31.webp",
    "step": 32,
    "t": 0.64,
-   "points": 249887
+   "points": 211410
   },
   {
    "src": "step_32.webp",
    "step": 33,
    "t": 0.66,
-   "points": 250117
+   "points": 211680
   },
   {
    "src": "step_33.webp",
    "step": 34,
    "t": 0.68,
-   "points": 250484
+   "points": 212039
   },
   {
    "src": "step_34.webp",
    "step": 35,
    "t": 0.7,
-   "points": 250522
+   "points": 212170
   },
   {
    "src": "step_35.webp",
    "step": 36,
    "t": 0.72,
-   "points": 250945
+   "points": 212535
   },
   {
    "src": "step_36.webp",
    "step": 37,
    "t": 0.74,
-   "points": 251098
+   "points": 212707
   },
   {
    "src": "step_37.webp",
    "step": 38,
    "t": 0.76,
-   "points": 251589
+   "points": 213170
   },
   {
    "src": "step_38.webp",
    "step": 39,
    "t": 0.78,
-   "points": 251643
+   "points": 213240
   },
   {
    "src": "step_39.webp",
    "step": 40,
    "t": 0.8,
-   "points": 251911
+   "points": 213476
   },
   {
    "src": "step_40.webp",
    "step": 41,
    "t": 0.82,
-   "points": 252233
+   "points": 213823
   },
   {
    "src": "step_41.webp",
    "step": 42,
    "t": 0.84,
-   "points": 252532
+   "points": 214057
   },
   {
    "src": "step_42.webp",
    "step": 43,
    "t": 0.86,
-   "points": 252934
+   "points": 214461
   },
   {
    "src": "step_43.webp",
    "step": 44,
    "t": 0.88,
-   "points": 253071
+   "points": 214579
   },
   {
    "src": "step_44.webp",
    "step": 45,
    "t": 0.9,
-   "points": 253272
+   "points": 214782
   },
   {
    "src": "step_45.webp",
    "step": 46,
    "t": 0.92,
-   "points": 253544
+   "points": 215023
   },
   {
    "src": "step_46.webp",
    "step": 47,
    "t": 0.94,
-   "points": 253668
+   "points": 215141
   },
   {
    "src": "step_47.webp",
    "step": 48,
    "t": 0.96,
-   "points": 253750
+   "points": 215217
   },
   {
    "src": "step_48.webp",
    "step": 49,
    "t": 0.98,
-   "points": 253741
+   "points": 215241
   },
   {
    "src": "step_49.webp",
    "step": 50,
    "t": 1.0,
-   "points": 253661
+   "points": 215190
   }
  ]
 }
