@@ -157,6 +157,7 @@ function boot() {
   lazyInit('[data-widget="flow"]', () => import('./widgets/flow-scrubber.js').then((m) => m.initFlowScrubber), '400px');
   lazyInit('#problem', () => import('./anim-player.js').then((m) => () => m.initAnimations()), '120%');
   lazyInit('[data-hero-anim]', () => import('./hero-anim.js').then((m) => m.initHeroAnim), '0px');
+  lazyInit('[data-teaser-video]', () => import('./teaser-video.js').then((m) => m.initTeaserVideo), '400px');
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

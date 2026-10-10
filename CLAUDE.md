@@ -29,6 +29,9 @@ js/viewers/compare.js       baseline-vs-ours viewer with camera sync; holds the 
 js/chart.js                 SVG bar chart (occluded APD / complete FS); numbers inline, mirror Tables 1-2
 js/anim-player.js           inline Manim videos: loop while >=50% visible, pause off-screen; beat chips under
                             each clip highlight the current beat and seek to it (marks from media/anim/manifest.json)
+js/teaser-video.js          teaser film below the hero: source attached near the viewport; autoplays muted while >=50%
+                            visible on wide screens (pauses off-screen, respects a manual pause); phones / reduced
+                            motion: tap to play with sound; the "Sound" chip toggles audio
 js/hero-anim.js             hero logo loop: picks media/logo-anim.mov (WebKit: HEVC+alpha) or .webm (VP9+alpha) by
                             engine, attaches it on idle while on screen; reduced motion keeps the poster
 js/widgets/tudf-slider.js   W1: tau/eps slider over media/widgets/tudf-slice.{png,json}
@@ -36,6 +39,9 @@ js/widgets/flow-scrubber.js W2: t-slider over media/widgets/flow/<scene>/step_XX
 fonts/                      self-hosted WOFF2: Inter, Newsreader (+italic), JetBrains Mono
 figures/opt/                WebP figures at 800/1600/2400 (scripts/optimize_images.py); originals stay in figures/
 figures/logo/               Cycles logo master (= frame 0 of the hero loop) + favicons (scripts/logo/make_assets.sh)
+media/teaser-video.mp4      the teaser film = video_teaser/VolFill_teaser_share.mp4 (2:26, 1080p30 + score, 93 MB,
+                            faststart); -poster.webp = video_teaser/poster.jpg. The published site is ~0.94 GB of
+                            GitHub Pages' 1 GB cap: budget any further large assets carefully
 media/logo-anim.*           hero logo loop, 840 px, transparent: .mov (HEVC+alpha), .webm (VP9+alpha), -poster.webp
 media/anim/                 s1..s3 x {dark,light} x {webm,mp4,jpg poster} + manifest.json (Problem, TUDF, VAE)
 media/widgets/              widget data (scripts/export_widget_data.py)

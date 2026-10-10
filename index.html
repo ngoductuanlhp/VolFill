@@ -76,6 +76,8 @@
   <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></g></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-sync" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M4 10a8 8 0 0 1 14.3-4.3L20 7.5M20 3.5v4h-4M20 14a8 8 0 0 1-14.3 4.3L4 16.5M4 20.5v-4h4"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="M15.5 9a4 4 0 0 1 0 6M18.3 6.3a8 8 0 0 1 0 11.4"/></g></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></g></symbol>
 </svg>
 
 <!-- ================================================================ TOP BAR -->
@@ -140,6 +142,16 @@
   </div>
 
   <div class="wrap-wide">
+    <figure class="teaser-video" data-teaser-video>
+      <div class="stage stage-video">
+        <video data-src="media/teaser-video.mp4" poster="media/teaser-video-poster.webp" width="1920" height="1080"
+               controls muted loop playsinline preload="none" aria-label="VolFill teaser video, 2 min 26 s"></video>
+        <button class="chip-btn video-sound" type="button" data-sound aria-pressed="false">
+          <svg class="icon" aria-hidden="true"><use href="#i-mute"/></svg><span>Sound off</span>
+        </button>
+      </div>
+    </figure>
+
     <figure class="teaser" data-teaser>
       <div class="stage stage-teaser" data-stage>
         <img class="stage-poster" src="media/teaser-poster.webp" width="1280" height="656" alt="" fetchpriority="high">
